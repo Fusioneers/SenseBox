@@ -5,6 +5,15 @@ _Kann man anhand von Umgebungsdaten mithilfe einer KI vorhersagen, auf welcher H
 Falls ja, sind diese Vorhersagen genauer als herkömmliche Methoden?_
 
 
+## Ansatz
+Zunächst planen und bauen wir eine Sensorbox, welche diverse Umgebungswerte messen und speichern soll.
+
+Die Sensorbox lassen wir in die Höhe steigen und messen dabei mit einem Seil die tatsächliche Höhe der Box.
+Die aufgezeichneten Daten nutzen wir, um eine künstliche Intelligenz durch maschinelles Lernen zu trainieren.
+
+Anschließend wird die Genauigkeit evaluiert und mit denen herkömmlicher Methoden zur Höhenmessung verglichen.
+
+
 ## Anforderungen
 ### Bauteile
 * Microcontroller: Arduino nano / duo
