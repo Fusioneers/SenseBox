@@ -25,8 +25,13 @@ uint32_t syncTime = 0; // time of last sync()
 #define yellowLED 6
 #define greenLED 5
 
+// Der digitale Pin, an dem der Taster angeschlossen ist
+#define onOffButton 2
+
 RTC_DS1307 RTC; // Instanziert eine Real Time Clock
 
+// Kontrolliert wann die Daten gesammelt werden -> kann über den Knopf an onOffButton kontrolliert werden
+int _running = 0;
 // for the data logging shield, we use digital pin 10 for the SD cs line
 const int chipSelect = 10;
 
@@ -51,7 +56,10 @@ void setup(void)
   pinMode(yellowLED, OUTPUT);
   pinMode(greenLED, OUTPUT);
 
-  digitalWrite(yellowLED, HIGH); // Die gelbe LED wird für dden restlichen setup-Teil angeschaltet
+  // Setzt den Pin-Mode des An- Ausschalters auf INPUT
+  pinMode(onOffButton, INPUT);
+
+  digitalWrite(yellowLED, HIGH); // Die gelbe LED wird für den restlichen setup-Teil angeschaltet
 
   Serial.println("Initializing SD card...");
   pinMode(10, OUTPUT); // Setzt den SD-Karten Pin vorsichtshalber bereits auf OUTPUT
@@ -105,85 +113,91 @@ void setup(void)
 
 void loop(void)
 {
-  DateTime now; // Initialisiert die Zeit-variable now
+  digitalWrite(greenLED, LOW); // Schaltet die grüne LED aus
+  if (digitalRead(onOffButton) == HIGH) {
+    _running = !_running;
+  }
+  if (_running == 1) {
+    DateTime now; // Initialisiert die Zeit-variable now
 
-  delay((LOG_INTERVAL - 1) - (millis() % LOG_INTERVAL)); // Wartet kurze Zeit ab
-
-  digitalWrite(greenLED, HIGH); // Schaltet die grüne LED an
+    delay((LOG_INTERVAL - 1) - (millis() % LOG_INTERVAL)); // Wartet kurze Zeit ab
   
-  now = RTC.now(); // Setzt now auf die aktuelle Zeit
-  // Schreibt die Zeit im yyyy/mm/dd hh:mm:ss Format in die Log-Datei
-  logfile.print('"');
-  logfile.print(now.year(), DEC);
-  logfile.print("/");
-  logfile.print(now.month(), DEC);
-  logfile.print("/");
-  logfile.print(now.day(), DEC);
-  logfile.print(" ");
-  logfile.print(now.hour(), DEC);
-  logfile.print(":");
-  logfile.print(now.minute(), DEC);
-  logfile.print(":");
-  logfile.print(now.second(), DEC);
-  logfile.print('"');
-  #if ECHO_TO_SERIAL
-    // Gibt die Zeit im yyyy/mm/dd hh:mm:ss Format aus
-    Serial.print('"');
-    Serial.print(now.year(), DEC);
-    Serial.print("/");
-    Serial.print(now.month(), DEC);
-    Serial.print("/");
-    Serial.print(now.day(), DEC);
-    Serial.print(" ");
-    Serial.print(now.hour(), DEC);
-    Serial.print(":");
-    Serial.print(now.minute(), DEC);
-    Serial.print(":");
-    Serial.print(now.second(), DEC);
-    Serial.print('"');
-  #endif //ECHO_TO_SERIAL
-
-  // Liest die Sensorwerte vom BME aus und schreibt sie in Vaiablen
-  double temp = bme280.getTemperature();
-  double pres = bme280.getPressure(); // Druck in Pascal
-  double hum = bme280.getHumidity();
-  double alt = bme280.calcAltitude(pres);
-
-  // Schreibt die Werte in die Log-Datei
-  logfile.print(", ");
-  logfile.print(temp);
-  logfile.print(", ");
-  logfile.print(pres / 100000);  // Umrechnung in Bar
-  logfile.print(", ");
-  logfile.print(hum);
-  logfile.print(", ");
-  logfile.print(alt);
-  #if ECHO_TO_SERIAL
-    Serial.print(", ");
-    Serial.print(temp);
-    Serial.print("C");
-    Serial.print(", ");
-    Serial.print(pres / 100000);  // Umrechnung in Bar
-    Serial.print("Bar");
-    Serial.print(", ");
-    Serial.print(hum);
-    Serial.print(", ");
-    Serial.print(alt);
-    Serial.print("m");
-  #endif //ECHO_TO_SERIAL
-
-  logfile.println(); // Beginnt eine neue Zeile in der Log-Datei 
-  #if ECHO_TO_SERIAL
-    Serial.println(); // Beginnt eine neue Zeile im Seriellen Monitor
-  #endif // ECHO_TO_SERIAL
-
-  // Stellt sicher, dass nicht zu oft auf die SD-Karte zugegriffen wird
-  if ((millis() - syncTime) < SYNC_INTERVAL) return;
-  syncTime = millis();
-
-  // Lässt die gelbe LED blinken, um zu signalisieren, dass synchronisiert wird
-  digitalWrite(yellowLED, HIGH);
-  logfile.flush();
-  digitalWrite(yellowLED, LOW);
-
+    digitalWrite(greenLED, HIGH); // Schaltet die grüne LED an
+    
+    now = RTC.now(); // Setzt now auf die aktuelle Zeit
+    // Schreibt die Zeit im yyyy/mm/dd hh:mm:ss Format in die Log-Datei
+    logfile.print('"');
+    logfile.print(now.year(), DEC);
+    logfile.print("/");
+    logfile.print(now.month(), DEC);
+    logfile.print("/");
+    logfile.print(now.day(), DEC);
+    logfile.print(" ");
+    logfile.print(now.hour(), DEC);
+    logfile.print(":");
+    logfile.print(now.minute(), DEC);
+    logfile.print(":");
+    logfile.print(now.second(), DEC);
+    logfile.print('"');
+    #if ECHO_TO_SERIAL
+      // Gibt die Zeit im yyyy/mm/dd hh:mm:ss Format aus
+      Serial.print('"');
+      Serial.print(now.year(), DEC);
+      Serial.print("/");
+      Serial.print(now.month(), DEC);
+      Serial.print("/");
+      Serial.print(now.day(), DEC);
+      Serial.print(" ");
+      Serial.print(now.hour(), DEC);
+      Serial.print(":");
+      Serial.print(now.minute(), DEC);
+      Serial.print(":");
+      Serial.print(now.second(), DEC);
+      Serial.print('"');
+    #endif //ECHO_TO_SERIAL
+  
+    // Liest die Sensorwerte vom BME aus und schreibt sie in Vaiablen
+    double temp = bme280.getTemperature();
+    double pres = bme280.getPressure(); // Druck in Pascal
+    double hum = bme280.getHumidity();
+    double alt = bme280.calcAltitude(pres);
+  
+    // Schreibt die Werte in die Log-Datei
+    logfile.print(", ");
+    logfile.print(temp);
+    logfile.print(", ");
+    logfile.print(pres / 100000);  // Umrechnung in Bar
+    logfile.print(", ");
+    logfile.print(hum);
+    logfile.print(", ");
+    logfile.print(alt);
+    #if ECHO_TO_SERIAL
+      Serial.print(", ");
+      Serial.print(temp);
+      Serial.print("C");
+      Serial.print(", ");
+      Serial.print(pres / 100000);  // Umrechnung in Bar
+      Serial.print("Bar");
+      Serial.print(", ");
+      Serial.print(hum);
+      Serial.print(", ");
+      Serial.print(alt);
+      Serial.print("m");
+    #endif //ECHO_TO_SERIAL
+  
+    logfile.println(); // Beginnt eine neue Zeile in der Log-Datei 
+    #if ECHO_TO_SERIAL
+      Serial.println(); // Beginnt eine neue Zeile im Seriellen Monitor
+    #endif // ECHO_TO_SERIAL
+  
+    // Stellt sicher, dass nicht zu oft auf die SD-Karte zugegriffen wird
+    if ((millis() - syncTime) < SYNC_INTERVAL) return;
+    syncTime = millis();
+  
+    // Lässt die gelbe LED blinken, um zu signalisieren, dass synchronisiert wird
+    digitalWrite(yellowLED, HIGH);
+    logfile.flush();
+    digitalWrite(yellowLED, LOW);
+  }
+  delay(100);
 }
