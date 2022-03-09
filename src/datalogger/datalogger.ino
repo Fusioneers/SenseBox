@@ -19,9 +19,9 @@ uint32_t syncTime = 0; // time of last sync()
 #define ECHO_TO_SERIAL   1 // Bestimmt, ob die Daten auch auf dem seriellen Monitor ausgegeben werden
 
 // Die digitalen Pins, an denen die LEDs für die Satusanzeige angeschlossen sind
-#define redLED 2
-#define yellowLED 3
-#define greenLED 4
+#define redLED 7
+#define yellowLED 6
+#define greenLED 5
 
 RTC_DS1307 RTC; // Instanziert eine Real Time Clock
 
@@ -51,7 +51,7 @@ void setup(void)
 
   digitalWrite(yellowLED, HIGH); // Die gelbe LED wird für dden restlichen setup-Teil angeschaltet
 
-  Serial.print("Initializing SD card...");
+  Serial.println("Initializing SD card...");
   pinMode(10, OUTPUT); // Setzt den SD-Karten Pin vorsichtshalber bereits auf OUTPUT
 
   // Initialisiert die SD-Karte, sofern vorhanden
@@ -93,9 +93,9 @@ void setup(void)
     error("Couldn't read data from BME"); // ...dann soll eine Fehlermeldung ausgegeben werden.
   }
 
-  logfile.println("time,temperature,pressure,humidity"); // Setzt die Spaltennamen für die CSV-Log-Datei
+  logfile.println("time,temperature,pressure,humidity,altitude"); // Setzt die Spaltennamen für die CSV-Log-Datei
   #if ECHO_TO_SERIAL
-    Serial.println("time,temperature,pressure,humidity"); // Setzt die Spaltennamen für die Ausgabe
+    Serial.println("time,temperature,pressure,humidity,altitude"); // Setzt die Spaltennamen für die Ausgabe
   #endif //ECHO_TO_SERIAL
   
   digitalWrite(yellowLED, LOW); // Die gelbe LED wird wieder ausgeschaltet
@@ -145,6 +145,7 @@ void loop(void)
   double temp = bme280.getTemperature();
   double pres = bme280.getPressure(); // Druck in Pascal
   double hum = bme280.getHumidity();
+  double alt = bme280.calcAltitude(pres);
 
   // Schreibt die Werte in die Log-Datei
   logfile.print(", ");
@@ -153,6 +154,8 @@ void loop(void)
   logfile.print(pres / 100000);  // Umrechnung in Bar
   logfile.print(", ");
   logfile.print(hum);
+  logfile.print(", ");
+  logfile.print(alt);
   #if ECHO_TO_SERIAL
     Serial.print(", ");
     Serial.print(temp);
@@ -162,6 +165,9 @@ void loop(void)
     Serial.print("Bar");
     Serial.print(", ");
     Serial.print(hum);
+    Serial.print(", ");
+    Serial.print(alt);
+    Serial.print("m");
   #endif //ECHO_TO_SERIAL
 
   logfile.println(); // Beginnt eine neue Zeile in der Log-Datei 
