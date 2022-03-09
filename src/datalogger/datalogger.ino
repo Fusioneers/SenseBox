@@ -4,6 +4,8 @@
 #include <Seeed_BME280.h> // Ermöglicht die Kommunikation mit dem BME
 #include <Wire.h>  // Ermöglicht mit Geräten zu kommunizieren, welche das I²C Protokoll verwenden
 
+// For Linux: sudo chmod a+rw /dev/ttyACM0
+
 BME280 bme280; // Instanziert den BME280
 
 // how many milliseconds between grabbing data and logging it. 1000 ms is once a second
