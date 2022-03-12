@@ -26,7 +26,7 @@ uint32_t syncTime = 0; // time of last sync()
 #define greenLED 5
 
 // Der digitale Pin, an dem der Taster angeschlossen ist
-#define onOffButton 2
+#define onOffButton A3
 
 RTC_DS1307 RTC; // Instanziert eine Real Time Clock
 
@@ -109,20 +109,19 @@ void setup(void)
   #endif //ECHO_TO_SERIAL
   
   digitalWrite(yellowLED, LOW); // Die gelbe LED wird wieder ausgeschaltet
+  digitalWrite(greenLED, HIGH); // Schaltet die grüne LED an
 }
 
 void loop(void)
 {
-  digitalWrite(greenLED, LOW); // Schaltet die grüne LED aus
-  if (digitalRead(onOffButton) == HIGH) {
+  digitalWrite(yellowLED, LOW); // Schaltet die gelbe LED aus
+  if (analogRead(onOffButton) > 1000) {
     _running = !_running;
   }
   if (_running == 1) {
     DateTime now; // Initialisiert die Zeit-variable now
 
     delay((LOG_INTERVAL - 1) - (millis() % LOG_INTERVAL)); // Wartet kurze Zeit ab
-  
-    digitalWrite(greenLED, HIGH); // Schaltet die grüne LED an
     
     now = RTC.now(); // Setzt now auf die aktuelle Zeit
     // Schreibt die Zeit im yyyy/mm/dd hh:mm:ss Format in die Log-Datei
@@ -198,6 +197,8 @@ void loop(void)
     digitalWrite(yellowLED, HIGH);
     logfile.flush();
     digitalWrite(yellowLED, LOW);
+  } else {
+    digitalWrite(yellowLED, HIGH); // Schaltet die gelbe LED an
   }
-  delay(100);
+  delay(500);
 }
