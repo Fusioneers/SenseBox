@@ -30,7 +30,7 @@ Anschließend wird die Genauigkeit evaluiert und mit denen herkömmlicher Method
 * LED
 * Taster
 * Akku
-* PLA / Holz / Schrauben etc.
+* PLA / Styropor / Schrauben etc.
 
 ### Bibliotheken
 
