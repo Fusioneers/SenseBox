@@ -1,6 +1,7 @@
 import datetime
 import os
 import time
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -10,11 +11,15 @@ from src.constants import ABS_PATH, DATA_COLUMNS
 DATA_PATH = os.path.join(ABS_PATH, 'data')
 
 
-def read_data(path: str) -> np.ndarray:
+def read_data(path: str) -> Optional[np.ndarray]:
     if not os.path.exists(path):
         raise ValueError('Path %s does not exist' % path)
 
-    out = pd.read_csv(path)
+    try:
+        out = pd.read_csv(path)
+    except pd.errors.EmptyDataError as e:
+        print(str(e) + ' ' + path)
+        return None
 
     if out.empty:
         raise ValueError('The csv is empty')
@@ -38,17 +43,24 @@ def get_data_from_files(folder: str) -> np.ndarray:
     if not os.path.exists(folder):
         raise ValueError('The folder "%s" does not exist.' % folder)
 
+    filenames = []
     with os.scandir(folder) as ls:
         for item in ls:
             if item.is_file():
-                filename = str(item.name)
+                path = item.path
+                if path.endswith('.CSV'):
+                    filenames.append(path)
+
+    data = []
+    for path in filenames:
+        data.append(read_data(path))
+        # TODO convert time format
+    data = np.array(data)
+    print(data.shape)
 
 
 def main():
-    data = read_data(os.path.join(DATA_PATH, 'LOGGER25.CSV'))
-    print(data)
-    reformatted_data = convert_time_format(data)
-    print(reformatted_data)
+    get_data_from_files(DATA_PATH)
 
 
 if __name__ == '__main__':
