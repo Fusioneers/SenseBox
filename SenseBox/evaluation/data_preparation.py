@@ -1,7 +1,7 @@
-import datetime
 import os
-import time
 from typing import Optional
+import datetime
+import time
 
 import numpy as np
 import pandas as pd
@@ -10,14 +10,17 @@ from matplotlib import pyplot as plt
 from sklearn import preprocessing
 from sklearn import model_selection
 
-from src.constants import ABS_PATH, DATA_COLUMNS
+from SenseBox.constants import ABS_PATH, DATA_COLUMNS
 
 
 def read_data(path: str) -> Optional[np.ndarray]:
-    """
-    Read the data from a file.
-    :param path: The path to the file.
-    :return: The data in the file. If the file is empty, return None.
+    """Read the data from a file.
+
+    Args:
+        path: The path to the file.
+
+    Returns:
+        The data in the file. If the file is empty, return None.
     """
 
     if not os.path.exists(path):
@@ -40,10 +43,13 @@ def read_data(path: str) -> Optional[np.ndarray]:
 
 
 def convert_time_format(data: np.ndarray) -> np.ndarray:
-    """
-    Convert the time format of the data to unix time.
-    :param data: The data to convert.
-    :return: The data with the time format converted.
+    """Convert the time format of the data to unix time.
+
+    Args:
+        data: The data to convert.
+
+    Returns:
+         The data with the time format converted.
     """
 
     out = data
@@ -55,10 +61,13 @@ def convert_time_format(data: np.ndarray) -> np.ndarray:
 
 
 def get_data_from_files(folder: str) -> np.ndarray:
-    """
-    Get the data from all the files in the folder.
-    :param folder: The folder to get the data from.
-    :return: Numpy array of all the data.
+    """Get the data from all the files in the folder.
+
+    Args:
+        folder: The folder to get the data from.
+
+    Returns:
+         Numpy array of all the data.
     """
 
     if not os.path.exists(folder):
@@ -71,7 +80,7 @@ def get_data_from_files(folder: str) -> np.ndarray:
             path = os.path.join(folder, file)
             data.append(read_data(path))
 
-    # converts the time format
+    # convert the time format
     data = [convert_time_format(d) for d in data if d is not None]
 
     out = []
@@ -83,10 +92,13 @@ def get_data_from_files(folder: str) -> np.ndarray:
 
 
 def get_standard_scaler(data) -> preprocessing.StandardScaler:
-    """
-    Get a StandardScaler object.
-    :param data: The data to get the scaler from.
-    :return: The StandardScaler object.
+    """Get a StandardScaler object.
+
+    Args:
+        data: The data to get the scaler from.
+
+    Returns:
+         The StandardScaler object.
     """
 
     scaler = preprocessing.StandardScaler().fit(data)
@@ -94,10 +106,13 @@ def get_standard_scaler(data) -> preprocessing.StandardScaler:
 
 
 def separate_ground_truths(data) -> (np.ndarray, np.ndarray):
-    """
-    Separate the ground truths from the data.
-    :param data: The data to separate.
-    :return: The ground truths and the data.
+    """Separate the ground truths from the data.
+
+    Args:
+        data: The data to separate.
+
+    Returns:
+         The ground truths and the data.
     """
 
     ground_truths = data[:, -1]
@@ -106,14 +121,17 @@ def separate_ground_truths(data) -> (np.ndarray, np.ndarray):
     return ground_truths, data
 
 
-def get_dataset(data_path: str,
-                test_size: float = 0.1) -> (
+def get_dataset(data_path: str, test_size: float = 0.1, shuffle=True) -> (
         np.ndarray, np.ndarray, np.ndarray, np.ndarray):
-    """
-    Get the dataset.
-    :param data_path: The path to the folder containing the data.
-    :param test_size: The size of the test set.
-    :return: The training and the test set.
+    """Get the dataset.
+
+    Args:
+        data_path: The path to the folder containing the data.
+        test_size: The size of the test set.
+        shuffle: Whether to shuffle the data.
+
+    Returns:
+         The training and the test set.
     """
 
     data = get_data_from_files(data_path)
@@ -123,16 +141,17 @@ def get_dataset(data_path: str,
 
     y_dataset, X_dataset = separate_ground_truths(scaled)
     X_train, X_test, y_train, y_test = model_selection.train_test_split(
-        X_dataset, y_dataset, test_size=test_size)
+        X_dataset, y_dataset, test_size=test_size, shuffle=shuffle)
 
     return X_train, X_test, y_train, y_test
 
 
 def plot_data(data: np.ndarray, ground_truth: np.ndarray):
-    """
-    Plot the data.
-    :param ground_truth: The ground truth to plot.
-    :param data: The data to plot.
+    """Plot the data.
+
+    Args:
+        ground_truth: The ground truth to plot.
+        data: The data to plot.
     """
 
     columns = {key: data[:, i] for i, key in enumerate(DATA_COLUMNS[:-1])}
