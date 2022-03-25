@@ -43,24 +43,28 @@ def get_data_from_files(folder: str) -> np.ndarray:
     if not os.path.exists(folder):
         raise ValueError('The folder "%s" does not exist.' % folder)
 
-    filenames = []
-    with os.scandir(folder) as ls:
-        for item in ls:
-            if item.is_file():
-                path = item.path
-                if path.endswith('.CSV'):
-                    filenames.append(path)
-
+    # accumulate all the data in a folder
     data = []
-    for path in filenames:
-        data.append(read_data(path))
-        # TODO convert time format
-    data = np.array(data)
-    print(data.shape)
+    for file in os.listdir(folder):
+        if file.endswith('.csv') or file.endswith('.CSV'):
+            path = os.path.join(folder, file)
+            data.append(read_data(path))
+
+    # converts the time format
+    # data = [convert_time_format(d) for d in data if d is not None]
+
+    out = []
+    for set in data:
+        for row in set:
+            out.append(row)
+
+    return np.array(out)
 
 
 def main():
-    get_data_from_files(DATA_PATH)
+    data = get_data_from_files(DATA_PATH)
+    print(data)
+    print(data.shape)
 
 
 if __name__ == '__main__':
