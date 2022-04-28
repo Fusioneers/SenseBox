@@ -1,6 +1,5 @@
 #include <SPI.h>
 #include <SD.h>
-#include "RTClib.h"
 #include <Seeed_BME280.h> // Ermöglicht die Kommunikation mit dem BME
 #include <Wire.h>  // Ermöglicht mit Geräten zu kommunizieren, welche das I²C Protokoll verwenden
 
@@ -20,19 +19,26 @@ uint32_t syncTime = 0; // time of last sync()
 
 #define ECHO_TO_SERIAL   1 // Bestimmt, ob die Daten auch auf dem seriellen Monitor ausgegeben werden
 
-// Die digitalen Pins, an denen die LEDs für die Satusanzeige angeschlossen sind
+// Die digitalen Ports, an denen die LEDs für die Satusanzeige angeschlossen sind
 #define redLED 7
 #define yellowLED 6
 #define greenLED 5
 
-// Der digitale Pin, an dem der Taster angeschlossen ist
-#define onOffButton A3
+// Der digitale Port, an dem der Taster angeschlossen ist
+#define onOffButton A2
 
-RTC_DS1307 RTC; // Instanziert eine Real Time Clock
+// Der analoge Port, an dem der Hallsensor angeschlossen ist
+#define hallSensor A3
+
+// Der analoge Port, an dem der UV-Sensor angeschlossen ist
+#define UVSensor A0
 
 // Kontrolliert wann die Daten gesammelt werden -> kann über den Knopf an onOffButton kontrolliert werden
 int _running = 0;
-// for the data logging shield, we use digital pin 10 for the SD cs line
+
+// Zeitpunkt, zu dem der Start-Konopf gedrückt wurde -> läuft nach ca. 50 Tagen über
+unsigned long _running_since = 0; 
+
 const int chipSelect = 10;
 
 File logfile; // Instanziert das Log-File
@@ -40,8 +46,8 @@ File logfile; // Instanziert das Log-File
 // Falls ein Fehler auftritt, wird er von dieser Funktion gehandhabt
 void error(String message) {
   digitalWrite(greenLED, LOW); // Schaltet die grüne LED aus
+  digitalWrite(yellowLED, LOW); // Schaltet die gelbe LED aus
   digitalWrite(redLED, HIGH); // Schaltet die rote LED an
-  
   #if ECHO_TO_SERIAL
     Serial.println(message); // Gibt den Fehler aus
   #endif //ECHO_TO_SERIAL
@@ -49,8 +55,9 @@ void error(String message) {
 
 void setup(void)
 {
-  Serial.begin(9600); // Initialisiert den seriellen Monitor
-
+  // Initialisiert den seriellen Monitor
+  Serial.begin(9600);
+  
   // Setzt den Pin-Mode der Status-LEDs auf OUTPUT
   pinMode(redLED, OUTPUT);
   pinMode(yellowLED, OUTPUT);
@@ -59,10 +66,17 @@ void setup(void)
   // Setzt den Pin-Mode des An- Ausschalters auf INPUT
   pinMode(onOffButton, INPUT);
 
-  digitalWrite(yellowLED, HIGH); // Die gelbe LED wird für den restlichen setup-Teil angeschaltet
+  // Setzt den Pin-Mode des Hallsesnors auf INPUT
+  pinMode(hallSensor, INPUT);
+
+  // Die gelbe LED wird für den restlichen setup-Teil angeschaltet
+  digitalWrite(yellowLED, HIGH); 
+
+  delay(1000);
 
   Serial.println("Initializing SD card...");
-  pinMode(10, OUTPUT); // Setzt den SD-Karten Pin vorsichtshalber bereits auf OUTPUT
+  // Setzt den SD-Karten Pin vorsichtshalber bereits auf OUTPUT
+  pinMode(10, OUTPUT);
 
   // Initialisiert die SD-Karte, sofern vorhanden
   if (!SD.begin(chipSelect)) {
@@ -85,81 +99,81 @@ void setup(void)
 
   // Falls keine Log-Datei erstellt wurde (weil z.B. alle Namen belegt waren), wird eine Fehlermeldung ausgegeben
   if (! logfile) {
-    error("Couldnt create a logfile");
+    error("Could not create a logfile");
   }
 
   // Gibt den Namen der erstellten Log-Datei aus
   Serial.print("Logging to: ");
   Serial.println(filename);
 
-  // Verbindet sich mit der Real Time Clock
-  Wire.begin();
-  if (!RTC.begin()) {
-    error("RTC failed");
-  }
-
-  // Wenn keine Daten vom BME abgefragt werden können...
+  // Wenn keine Daten vom BME abgefragt werden können ...
   if (!bme280.init()) {
-    error("Couldn't read data from BME"); // ...dann soll eine Fehlermeldung ausgegeben werden.
+    error("Could not read data from BME"); // ... dann soll eine Fehlermeldung ausgegeben werden.
   }
 
-  logfile.println("time,temperature,pressure,humidity,altitude"); // Setzt die Spaltennamen für die CSV-Log-Datei
+  // Setzt die Spaltennamen für die CSV-Log-Datei
+  logfile.println("timestamp,temperature,pressure,humidity,altitude,hallsensor,uv"); 
   #if ECHO_TO_SERIAL
-    Serial.println("time,temperature,pressure,humidity,altitude"); // Setzt die Spaltennamen für die Ausgabe
+    // Gibt eine Warnung aus
+    Serial.println("Note: The timestamp starts with the execution of the programm and will overflow after approx. 50 days.");
+    // Setzt die Spaltennamen für die Ausgabe
+    Serial.println("timestamp,temperature,pressure,humidity,altitude,hallsensor,uv"); 
   #endif //ECHO_TO_SERIAL
-  
-  digitalWrite(yellowLED, LOW); // Die gelbe LED wird wieder ausgeschaltet
-  digitalWrite(greenLED, HIGH); // Schaltet die grüne LED an
+
+  while (analogRead(onOffButton) < 1023) {
+    delay(500);
+  }
+
+  // Schaltet die grüne LED an
+  digitalWrite(greenLED, HIGH);
+
+  delay(1000); // Wartet kurz
+
+  // Die gelbe LED wird wieder ausgeschaltet
+  digitalWrite(yellowLED, LOW);
+
+  // Setzt _running auf wahr
+  _running = 1;
+  // Die Startzeit wird gespeichert
+  _running_since = millis();
 }
 
 void loop(void)
-{
-  digitalWrite(yellowLED, LOW); // Schaltet die gelbe LED aus
-  if (analogRead(onOffButton) > 1000) {
-    _running = !_running;
-  }
-  if (_running == 1) {
-    DateTime now; // Initialisiert die Zeit-variable now
+{  
+  Serial.println(analogRead(onOffButton));
 
+  // Überprüft, ob der An-/Aus-Knopf gedrückt wird, falls ja, wird das Data-Logging beendet
+  if (analogRead(onOffButton) >= 1023) {
+    _running = 0;
+    digitalWrite(greenLED, LOW); // Schaltet die grüne LED aus
+    digitalWrite(yellowLED, HIGH); // Schaltet die gelbe LED an
+    digitalWrite(redLED, HIGH); // Schaltet die rote LED an
+  }
+  
+  if (_running == 1) {    
     delay((LOG_INTERVAL - 1) - (millis() % LOG_INTERVAL)); // Wartet kurze Zeit ab
     
-    now = RTC.now(); // Setzt now auf die aktuelle Zeit
-    // Schreibt die Zeit im yyyy/mm/dd hh:mm:ss Format in die Log-Datei
-    logfile.print('"');
-    logfile.print(now.year(), DEC);
-    logfile.print("/");
-    logfile.print(now.month(), DEC);
-    logfile.print("/");
-    logfile.print(now.day(), DEC);
-    logfile.print(" ");
-    logfile.print(now.hour(), DEC);
-    logfile.print(":");
-    logfile.print(now.minute(), DEC);
-    logfile.print(":");
-    logfile.print(now.second(), DEC);
-    logfile.print('"');
+    unsigned long _timestamp = millis() - _running_since; // Setzt now auf die aktuelle Zeit minus der Startzeit
+    // Schreibt die Zeit seit Start des Programmes (in Millisekunden) in die Log-Datei
+    logfile.print(_timestamp);
     #if ECHO_TO_SERIAL
-      // Gibt die Zeit im yyyy/mm/dd hh:mm:ss Format aus
-      Serial.print('"');
-      Serial.print(now.year(), DEC);
-      Serial.print("/");
-      Serial.print(now.month(), DEC);
-      Serial.print("/");
-      Serial.print(now.day(), DEC);
-      Serial.print(" ");
-      Serial.print(now.hour(), DEC);
-      Serial.print(":");
-      Serial.print(now.minute(), DEC);
-      Serial.print(":");
-      Serial.print(now.second(), DEC);
-      Serial.print('"');
+      // Gibt die Zeit seit Start des Programmes (in Millisekunden) aus
+      Serial.print(_timestamp);
     #endif //ECHO_TO_SERIAL
   
     // Liest die Sensorwerte vom BME aus und schreibt sie in Vaiablen
-    double temp = bme280.getTemperature();
+    double temp = bme280.getTemperature(); // Temperatur in Grad Celsius
     double pres = bme280.getPressure(); // Druck in Pascal
-    double hum = bme280.getHumidity();
-    double alt = bme280.calcAltitude(pres);
+    int hum = bme280.getHumidity(); // Luftfeuchtigkeit
+    double alt = bme280.calcAltitude(pres); // Berechnete Höhe
+
+    // Liest die Sensorwerte des Hall-Sensors aus
+    int hall = analogRead(hallSensor);
+
+    // Liest die Sensorwerte des UV-Sensors aus
+    float analogSignal = analogRead(UVSensor);
+    float voltage = analogSignal/1023*5;
+    float uvIndex = voltage / 0.1;
   
     // Schreibt die Werte in die Log-Datei
     logfile.print(", ");
@@ -170,6 +184,10 @@ void loop(void)
     logfile.print(hum);
     logfile.print(", ");
     logfile.print(alt);
+    logfile.print(", ");
+    logfile.print(hall);
+    logfile.print(", ");
+    logfile.print(uvIndex);
     #if ECHO_TO_SERIAL
       Serial.print(", ");
       Serial.print(temp);
@@ -182,6 +200,10 @@ void loop(void)
       Serial.print(", ");
       Serial.print(alt);
       Serial.print("m");
+      Serial.print(", ");
+      Serial.print(hall);
+      Serial.print(", ");
+      Serial.print(uvIndex);
     #endif //ECHO_TO_SERIAL
   
     logfile.println(); // Beginnt eine neue Zeile in der Log-Datei 
@@ -197,8 +219,7 @@ void loop(void)
     digitalWrite(yellowLED, HIGH);
     logfile.flush();
     digitalWrite(yellowLED, LOW);
-  } else {
-    digitalWrite(yellowLED, HIGH); // Schaltet die gelbe LED an
   }
+  
   delay(500);
 }
