@@ -1,21 +1,15 @@
+// For Linux: sudo chmod a+rw /dev/ttyACM0
+
+// Bibliotheken
 #include <SPI.h>
 #include <SD.h>
 #include <Seeed_BME280.h> // Ermöglicht die Kommunikation mit dem BME
 #include <Wire.h>  // Ermöglicht mit Geräten zu kommunizieren, welche das I²C Protokoll verwenden
 
-// For Linux: sudo chmod a+rw /dev/ttyACM0
-
 BME280 bme280; // Instanziert den BME280
 
-// how many milliseconds between grabbing data and logging it. 1000 ms is once a second
-#define LOG_INTERVAL  1000 // mills between entries (reduce to take more/faster data)
-
-// how many milliseconds before writing the logged data permanently to disk
-// set it to the LOG_INTERVAL to write each time (safest)
-// set it to 10*LOG_INTERVAL to write all data every 10 datareads, you  lose up to
-// the last 10 reads if power is lost but it uses less power and is much faster!
-#define SYNC_INTERVAL 1000 // mills between calls to flush() - to write data to the card
-uint32_t syncTime = 0; // time of last sync()
+#define SYNC_INTERVAL 10000 // Zeit in Millisekunden zwischen den Aufrufen von flush(), also dem speichern auf der SD Karte
+uint32_t syncTime = 0; // Zeit der letzten Synchronisierung
 
 #define ECHO_TO_SERIAL   1 // Bestimmt, ob die Daten auch auf dem seriellen Monitor ausgegeben werden
 
@@ -36,9 +30,16 @@ uint32_t syncTime = 0; // time of last sync()
 // Kontrolliert wann die Daten gesammelt werden -> kann über den Knopf an onOffButton kontrolliert werden
 int _running = 0;
 
-// Zeitpunkt, zu dem der Start-Konopf gedrückt wurde -> läuft nach ca. 50 Tagen über
-unsigned long _running_since = 0; 
+// Speichert wann der Hall-Sensor des Anemometers das letzte Mal ausgelöst wurde
+int lastRotation = 0;
 
+// Speichert wie lange das Anemometer für die letzte Umdrehug gebraucht hat
+int rotationTime = 0;
+
+// Zeitpunkt, zu dem der Start-Konopf gedrückt wurde -> läuft nach ca. 50 Tagen über
+unsigned long runningSince = 0; 
+
+// Port des SD-Karten-Lesemoduls
 const int chipSelect = 10;
 
 File logfile; // Instanziert das Log-File
@@ -53,8 +54,20 @@ void error(String message) {
   #endif //ECHO_TO_SERIAL
 }
 
+void hallSensorTriggered() {
+  int _now = millis();
+  rotationTime = _now - lastRotation;
+  lastRotation = _now;
+}
+
 void setup(void)
 {
+  // Kontrolliert ob ein Fehler innerhalb des setup Teils aufgetreten ist
+  bool errorOccuredInSetup = false;
+
+  // Attached die Funktion hallSensorTriggered, zu einem Ändern der Voltage am Port hallSensor von HIGH zu LOW
+  attachInterrupt(digitalPinToInterrupt(hallSensor), hallSensorTriggered, FALLING);
+  
   // Initialisiert den seriellen Monitor
   Serial.begin(9600);
   
@@ -72,7 +85,7 @@ void setup(void)
   // Die gelbe LED wird für den restlichen setup-Teil angeschaltet
   digitalWrite(yellowLED, HIGH); 
 
-  delay(1000);
+  delay(1000); // Warte kurz
 
   Serial.println("Initializing SD card...");
   // Setzt den SD-Karten Pin vorsichtshalber bereits auf OUTPUT
@@ -81,6 +94,7 @@ void setup(void)
   // Initialisiert die SD-Karte, sofern vorhanden
   if (!SD.begin(chipSelect)) {
     error("Card failed, or not present");
+    errorOccuredInSetup = true;
   }
   Serial.println("Card initialized.");
 
@@ -100,11 +114,12 @@ void setup(void)
   // Falls keine Log-Datei erstellt wurde (weil z.B. alle Namen belegt waren), wird eine Fehlermeldung ausgegeben
   if (! logfile) {
     error("Could not create a logfile");
+    errorOccuredInSetup = true;
+  } else {
+    // Andernfalls wird der Name der erstellten Log-Datei ausgegeben
+    Serial.print("Logging to: ");
+    Serial.println(filename);
   }
-
-  // Gibt den Namen der erstellten Log-Datei aus
-  Serial.print("Logging to: ");
-  Serial.println(filename);
 
   // Wenn keine Daten vom BME abgefragt werden können ...
   if (!bme280.init()) {
@@ -120,14 +135,22 @@ void setup(void)
     Serial.println("timestamp,temperature,pressure,humidity,altitude,hallsensor,uv"); 
   #endif //ECHO_TO_SERIAL
 
-  while (analogRead(onOffButton) < 1023) {
-    delay(500);
+    // Falls noch keine Fehler aufgetreten ist, wird auf das Drücken des Start-Knopfs gewartet
+  if (errorOccuredInSetup == false) {
+    while (analogRead(onOffButton) < 1023) {
+      delay(500);
+    } 
+  } else {
+    while (1==1) { // Andernfalls wird eine Warnung ausgegeben und gewartet
+      Serial.println("An error occured, see above");
+      delay(900000); 
+    }
   }
 
   // Schaltet die grüne LED an
   digitalWrite(greenLED, HIGH);
 
-  delay(1000); // Wartet kurz
+  delay(3000); // Wartet kurz
 
   // Die gelbe LED wird wieder ausgeschaltet
   digitalWrite(yellowLED, LOW);
@@ -135,13 +158,12 @@ void setup(void)
   // Setzt _running auf wahr
   _running = 1;
   // Die Startzeit wird gespeichert
-  _running_since = millis();
+  runningSince = millis();
+  int lastRotation = millis();
 }
 
 void loop(void)
 {  
-  Serial.println(analogRead(onOffButton));
-
   // Überprüft, ob der An-/Aus-Knopf gedrückt wird, falls ja, wird das Data-Logging beendet
   if (analogRead(onOffButton) >= 1023) {
     _running = 0;
@@ -151,16 +173,14 @@ void loop(void)
   }
   
   if (_running == 1) {    
-    delay((LOG_INTERVAL - 1) - (millis() % LOG_INTERVAL)); // Wartet kurze Zeit ab
-    
-    unsigned long _timestamp = millis() - _running_since; // Setzt now auf die aktuelle Zeit minus der Startzeit
+    unsigned long _timestamp = millis() - runningSince; // Setzt now auf die aktuelle Zeit minus der Startzeit
     // Schreibt die Zeit seit Start des Programmes (in Millisekunden) in die Log-Datei
     logfile.print(_timestamp);
     #if ECHO_TO_SERIAL
       // Gibt die Zeit seit Start des Programmes (in Millisekunden) aus
       Serial.print(_timestamp);
     #endif //ECHO_TO_SERIAL
-  
+
     // Liest die Sensorwerte vom BME aus und schreibt sie in Vaiablen
     double temp = bme280.getTemperature(); // Temperatur in Grad Celsius
     double pres = bme280.getPressure(); // Druck in Pascal
@@ -174,7 +194,7 @@ void loop(void)
     float analogSignal = analogRead(UVSensor);
     float voltage = analogSignal/1023*5;
     float uvIndex = voltage / 0.1;
-  
+
     // Schreibt die Werte in die Log-Datei
     logfile.print(", ");
     logfile.print(temp);
@@ -205,7 +225,7 @@ void loop(void)
       Serial.print(", ");
       Serial.print(uvIndex);
     #endif //ECHO_TO_SERIAL
-  
+
     logfile.println(); // Beginnt eine neue Zeile in der Log-Datei 
     #if ECHO_TO_SERIAL
       Serial.println(); // Beginnt eine neue Zeile im Seriellen Monitor
@@ -220,6 +240,4 @@ void loop(void)
     logfile.flush();
     digitalWrite(yellowLED, LOW);
   }
-  
-  delay(500);
 }
