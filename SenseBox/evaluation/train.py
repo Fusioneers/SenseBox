@@ -7,7 +7,7 @@ import data_preparation
 from model import create_model
 from SenseBox.constants import ABS_PATH
 
-epochs = 500
+epochs = 30
 batch_size = 32
 
 
@@ -25,7 +25,7 @@ def train(epochs,
     """
 
     X_train, X_test, y_train, y_test = data_preparation.get_dataset(
-        os.path.join(ABS_PATH, 'data'))
+        os.path.join(ABS_PATH, 'data', 'Lauf_02', 'LOGGER04.CSV'))
     print(f'X_train shape: {X_train.shape}')
     print(f'X_test shape: {X_test.shape}')
     print(f'y_train shape: {y_train.shape}')

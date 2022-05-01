@@ -10,7 +10,7 @@ from matplotlib import pyplot as plt
 from sklearn import preprocessing
 from sklearn import model_selection
 
-from SenseBox.constants import ABS_PATH, DATA_COLUMNS
+from SenseBox.constants import ABS_PATH, DATA_COLUMNS, GROUND_TRUTH_COLUMN
 
 
 def read_data(path: str) -> Optional[np.ndarray]:
@@ -115,8 +115,8 @@ def separate_ground_truths(data) -> (np.ndarray, np.ndarray):
          The ground truths and the data.
     """
 
-    ground_truths = data[:, -1]
-    data = data[:, :-1]
+    ground_truths = data[:, GROUND_TRUTH_COLUMN]
+    data = data[:, :GROUND_TRUTH_COLUMN + GROUND_TRUTH_COLUMN + 1:]
 
     return ground_truths, data
 
@@ -134,7 +134,8 @@ def get_dataset(data_path: str, test_size: float = 0.1, shuffle=True) -> (
          The training and the test set.
     """
 
-    data = get_data_from_files(data_path)
+    # data = get_data_from_files(data_path)
+    data = pd.read_csv(data_path).to_numpy()
 
     scaler = get_standard_scaler(data)
     scaled = scaler.transform(data)
@@ -163,7 +164,7 @@ def plot_data(data: np.ndarray, ground_truth: np.ndarray):
 
 def main():
     X_train, X_test, y_train, y_test = get_dataset(
-        os.path.join(ABS_PATH, 'data'))
+        os.path.join(ABS_PATH, 'data', 'Lauf_02', 'LOGGER04.CSV'))
     print(X_train.shape)
     print(X_test.shape)
     print(y_train.shape)
