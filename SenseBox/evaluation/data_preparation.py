@@ -10,8 +10,15 @@ from matplotlib import pyplot as plt
 from sklearn import preprocessing
 from sklearn import model_selection
 
-from SenseBox.constants import ABS_PATH, DATA_COLUMNS, GROUND_TRUTH_COLUMN
+from SenseBox.evaluation.constants import ABS_PATH
 
+GROUND_TRUTH_COLUMN = 5  # 'altitude'
+DATA_COLUMNS = ['time', 'temperature', 'pressure', 'humidity', 'altitude',
+                'uv']
+
+
+# os.path.join(ABS_PATH, 'data', 'Fahrradtour_Vg_03-05-2022',
+# 'Test_Sensorbox.gpx')
 
 def read_data(path: str) -> Optional[np.ndarray]:
     """Read the data from a file.
