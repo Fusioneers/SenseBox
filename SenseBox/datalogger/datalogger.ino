@@ -148,6 +148,8 @@ void setup(void)
     Serial.println("timestamp,temperature,pressure,humidity,altitude,uv"); 
   #endif //ECHO_TO_SERIAL
 
+  delay(5000);
+
     // Falls noch keine Fehler aufgetreten ist, wird auf das Drücken des Start-Knopfs gewartet
   if (errorOccuredInSetup == false) {
     while (analogRead(onOffButton) < 1023) {
@@ -202,7 +204,7 @@ void loop(void)
 
     // Liest die Sensorwerte vom BME aus und schreibt sie in Vaiablen
     double temp = bme280.getTemperature(); // Temperatur in Grad Celsius
-    double pres = bme280.getPressure(); // Druck in Pascal
+    int pres = bme280.getPressure(); // Druck in Pascal
     int hum = bme280.getHumidity(); // Luftfeuchtigkeit
     double alt = bme280.calcAltitude(pres); // Berechnete Höhe
 
@@ -215,7 +217,7 @@ void loop(void)
     logfile.print(", ");
     logfile.print(temp);
     logfile.print(", ");
-    logfile.print(pres / 100000);  // Umrechnung in Bar
+    logfile.print(pres);
     logfile.print(", ");
     logfile.print(hum);
     logfile.print(", ");
@@ -225,15 +227,15 @@ void loop(void)
     #if ECHO_TO_SERIAL
       Serial.print(", ");
       Serial.print(temp);
-      Serial.print("C");
+      Serial.print(" °C");
       Serial.print(", ");
-      Serial.print(pres / 100000);  // Umrechnung in Bar
-      Serial.print("Bar");
+      Serial.print(pres);
+      Serial.print(" Pascal");
       Serial.print(", ");
       Serial.print(hum);
       Serial.print(", ");
       Serial.print(alt);
-      Serial.print("m");
+      Serial.print(" m");
       Serial.print(", ");
       Serial.print(uvIndex);
     #endif //ECHO_TO_SERIAL
