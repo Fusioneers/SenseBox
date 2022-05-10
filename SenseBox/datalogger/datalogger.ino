@@ -11,12 +11,14 @@ BME280 bme280; // Instanziert den BME280
 #define SYNC_INTERVAL 10000 // Zeit in Millisekunden zwischen den Aufrufen von flush(), also dem speichern auf der SD Karte
 uint32_t syncTime = 0; // Zeit der letzten Synchronisierung
 
-#define ECHO_TO_SERIAL   1 // Bestimmt, ob die Daten auch auf dem seriellen Monitor ausgegeben werden
+#define ECHO_TO_SERIAL false // Bestimmt, ob die Daten auch auf dem seriellen Monitor ausgegeben werden
 
 // Die digitalen Ports, an denen die LEDs für die Satusanzeige angeschlossen sind
 #define redLED 7
 #define yellowLED 6
 #define greenLED 5
+
+# define onlyMeasureHallSesnor false
 
 // Der digitale Port, an dem der Taster angeschlossen ist
 #define onOffButton A2
@@ -34,7 +36,10 @@ int _running = 0;
 unsigned long runningSince = 0; 
 
 // Port des SD-Karten-Lesemoduls
-const int chipSelect = 10;
+#define chipSelect 10
+
+// Speichert die letzten 10 Zeiten, zu denen der Hall-Sensor getriggert wurde
+unsigned long lastLallSesnorTriggerTime = 0;
 
 File logfile; // Instanziert das allgemeine Log-File
 File hall_trigger_logfile; // Instanziert das Log-File für die Auslösungen des Hall-Sensors
@@ -52,7 +57,7 @@ void error(String message) {
 
 void hallSensorTriggered() {
   if (_running) {
-    hall_trigger_logfile.println(millis());
+    lastLallSesnorTriggerTime = millis();
   }
 }
 
@@ -193,57 +198,69 @@ void loop(void)
     digitalWrite(redLED, HIGH); // Schaltet die rote LED an
   }
   
-  if (_running == 1) {    
-    unsigned long _timestamp = millis() - runningSince; // Setzt now auf die aktuelle Zeit minus der Startzeit
-    // Schreibt die Zeit seit Start des Programmes (in Millisekunden) in die Log-Datei
-    logfile.print(_timestamp);
-    #if ECHO_TO_SERIAL
-      // Gibt die Zeit seit Start des Programmes (in Millisekunden) aus
-      Serial.print(_timestamp);
-    #endif //ECHO_TO_SERIAL
+  if (_running == 1) {
+    if (lastLallSesnorTriggerTime != 0) {
 
-    // Liest die Sensorwerte vom BME aus und schreibt sie in Vaiablen
-    double temp = bme280.getTemperature(); // Temperatur in Grad Celsius
-    int pres = bme280.getPressure(); // Druck in Pascal
-    int hum = bme280.getHumidity(); // Luftfeuchtigkeit
-    double alt = bme280.calcAltitude(pres); // Berechnete Höhe
-
-    // Liest die Sensorwerte des UV-Sensors aus
-    float analogSignal = analogRead(UVSensor);
-    float voltage = analogSignal/1023*5;
-    float uvIndex = voltage / 0.1;
-
-    // Schreibt die Werte in die Log-Datei
-    logfile.print(", ");
-    logfile.print(temp);
-    logfile.print(", ");
-    logfile.print(pres);
-    logfile.print(", ");
-    logfile.print(hum);
-    logfile.print(", ");
-    logfile.print(alt);
-    logfile.print(", ");
-    logfile.print(uvIndex);
-    #if ECHO_TO_SERIAL
-      Serial.print(", ");
-      Serial.print(temp);
-      Serial.print(" °C");
-      Serial.print(", ");
-      Serial.print(pres);
-      Serial.print(" Pascal");
-      Serial.print(", ");
-      Serial.print(hum);
-      Serial.print(", ");
-      Serial.print(alt);
-      Serial.print(" m");
-      Serial.print(", ");
-      Serial.print(uvIndex);
-    #endif //ECHO_TO_SERIAL
-
-    logfile.println(); // Beginnt eine neue Zeile in der Log-Datei 
-    #if ECHO_TO_SERIAL
-      Serial.println(); // Beginnt eine neue Zeile im Seriellen Monitor
-    #endif // ECHO_TO_SERIAL
+      #if ECHO_TO_SERIAL
+        Serial.println("Hall sensor triggered!");
+      #endif //ECHO_TO_SERIAL
+      
+      
+      hall_trigger_logfile.println(lastLallSesnorTriggerTime);
+      lastLallSesnorTriggerTime = 0;
+    }
+    
+    if (!onlyMeasureHallSesnor) {
+      unsigned long _timestamp = millis() - runningSince; // Setzt now auf die aktuelle Zeit minus der Startzeit
+      // Schreibt die Zeit seit Start des Programmes (in Millisekunden) in die Log-Datei
+      logfile.print(_timestamp);
+      #if ECHO_TO_SERIAL
+        // Gibt die Zeit seit Start des Programmes (in Millisekunden) aus
+        Serial.print(_timestamp);
+      #endif //ECHO_TO_SERIAL
+  
+      // Liest die Sensorwerte vom BME aus und schreibt sie in Vaiablen
+      // double temp = ; // Temperatur in Grad Celsius
+      // int hum = ; // Luftfeuchtigkeit
+      // double alt = ; // Berechnete Höhe
+  
+      // Liest die Sensorwerte des UV-Sensors aus
+      float analogSignal = analogRead(UVSensor);
+      float voltage = analogSignal/1023*5;
+      float uvIndex = voltage / 0.1;
+  
+      // Schreibt die Werte in die Log-Datei
+      logfile.print(", ");
+      logfile.print(bme280.getTemperature());
+      logfile.print(", ");
+      logfile.print(bme280.getPressure());
+      logfile.print(", ");
+      logfile.print(bme280.getHumidity());
+      logfile.print(", ");
+      logfile.print(bme280.calcAltitude(bme280.getPressure()));
+      logfile.print(", ");
+      logfile.print(uvIndex);
+      #if ECHO_TO_SERIAL
+        Serial.print(", ");
+        Serial.print(bme280.getTemperature());
+        Serial.print(" °C");
+        Serial.print(", ");
+        Serial.print(bme280.getPressure());
+        Serial.print(" Pascal");
+        Serial.print(", ");
+        Serial.print(bme280.getHumidity());
+        Serial.print(", ");
+        Serial.print(bme280.calcAltitude(bme280.getPressure()));
+        Serial.print(" m");
+        Serial.print(", ");
+        Serial.print(uvIndex);
+      #endif //ECHO_TO_SERIAL
+  
+      logfile.println(); // Beginnt eine neue Zeile in der Log-Datei 
+      #if ECHO_TO_SERIAL
+        Serial.println(); // Beginnt eine neue Zeile im Seriellen Monitor
+      #endif // ECHO_TO_SERIAL   
+    }
   
     // Stellt sicher, dass nicht zu oft auf die SD-Karte zugegriffen wird
     if ((millis() - syncTime) < SYNC_INTERVAL) return;
