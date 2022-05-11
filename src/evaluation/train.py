@@ -5,7 +5,7 @@ import numpy as np
 
 import data_preparation
 from model import create_model
-from SenseBox.constants import ABS_PATH
+from src.constants import ABS_PATH
 
 epochs = 30
 batch_size = 32
@@ -42,7 +42,7 @@ def train(epochs,
 def main():
     model, X_train, X_test, y_train, y_test = train(epochs, batch_size)
     model.save(
-        os.path.join(ABS_PATH, 'SenseBox', 'evaluation', 'models',
+        os.path.join(ABS_PATH, 'src', 'evaluation', 'models',
                      f'model_{epochs}.h5'))
     score = model.evaluate(X_test, y_test)
     print(score)

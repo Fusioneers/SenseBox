@@ -63,7 +63,7 @@ def main():
     #                  'Test_Sensorbox.gpx')))
     print(get_wind_speed(
         os.path.join(ABS_PATH, 'data', 'Fahrradtour_Vg_03-05-2022',
-                     'datalogger-hall-sensor', 'HALLOG01.CSV')))
+                     'datalogger-hall-sensor', '(deprecated)HALLOG01.CSV')))
 
 
 if __name__ == '__main__':
