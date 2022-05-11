@@ -5,7 +5,7 @@ import numpy as np
 
 import data_preparation
 from model import create_model
-from src.constants import ABS_PATH
+from src.evaluation.constants import ABS_PATH
 
 epochs = 30
 batch_size = 32
