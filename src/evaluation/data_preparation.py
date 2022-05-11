@@ -134,6 +134,5 @@ def main():
     print(y_test.shape)
     plot_data(X_train, y_train, columns)
 
-
 if __name__ == '__main__':
     main()
