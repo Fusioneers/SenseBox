@@ -41,7 +41,7 @@ def read_data(path: str) -> Optional[Tuple[np.ndarray, list]]:
     except pd.errors.EmptyDataError as e:
         print(str(e) + ' ' + path)
         return None
-    out = out.drop(columns=['altitude'])
+    out = out.drop(columns=['altitude', 'time'])
 
     if out.empty:
         raise ValueError('The csv is empty')

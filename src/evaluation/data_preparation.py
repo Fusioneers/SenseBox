@@ -12,16 +12,6 @@ from sklearn import model_selection
 
 from src.evaluation import data_extraction, constants
 
-GROUND_TRUTH_COLUMN = 5  # 'altitude'
-DATA_COLUMNS = ['time', 'temperature', 'pressure', 'humidity', 'altitude',
-                'uv']
-
-
-# os.path.join(ABS_PATH, 'data', 'Fahrradtour_Vg_03-05-2022',
-# 'Test_Sensorbox.gpx')
-# convert the time format
-# data = [convert_time_format(d) for d in data if d is not None]
-
 
 # TODO get the time
 def convert_time_format(data: np.ndarray) -> np.ndarray:
@@ -40,7 +30,8 @@ def convert_time_format(data: np.ndarray) -> np.ndarray:
     return out
 
 
-def standardize(data: np.ndarray) -> np.ndarray:
+def standardize(data: np.ndarray) -> Tuple[
+    np.ndarray, preprocessing.StandardScaler]:
     """Get a StandardScaler object.
 
     Args:
@@ -50,9 +41,8 @@ def standardize(data: np.ndarray) -> np.ndarray:
          The StandardScaler object.
     """
 
-
     scaler = preprocessing.StandardScaler().fit(data)
-    return scaler.transform(data)
+    return scaler.transform(data), scaler
 
 
 def add_wind_speed(data: np.ndarray, path: str) -> np.ndarray:
@@ -85,7 +75,7 @@ def get_dataset(data_path: str,
 
 
 def plot_data(X_dataset: np.ndarray, y_dataset: np.ndarray, columns: list):
-    columns = {key: X_dataset[:, i] for i, key in enumerate(DATA_COLUMNS)}
+    columns = {key: X_dataset[:, i] for i, key in enumerate(columns)}
     columns['altitude'] = y_dataset
     df = pd.DataFrame(data=columns)
     sns.pairplot(df)
@@ -93,7 +83,8 @@ def plot_data(X_dataset: np.ndarray, y_dataset: np.ndarray, columns: list):
 
 
 def aggregate_dataset(test_size: float = 0.1, shuffle=True) -> (
-        np.ndarray, np.ndarray, np.ndarray, np.ndarray, list):
+        np.ndarray, np.ndarray, np.ndarray, np.ndarray, list,
+        preprocessing.StandardScaler, preprocessing.StandardScaler):
     hallog_file_paths = []
     logger_file_paths = []
     fix_heights = []
@@ -120,25 +111,28 @@ def aggregate_dataset(test_size: float = 0.1, shuffle=True) -> (
             y_datasets.append(y_dataset)
 
         X_dataset = np.concatenate(X_datasets, axis=0)
-        X_dataset = standardize(X_dataset)
         y_dataset = np.concatenate(y_datasets, axis=0)
-        y_dataset = standardize(y_dataset)
+
+        X_dataset, X_scaler = standardize(X_dataset)
+        y_dataset, y_scaler = standardize(y_dataset[..., np.newaxis])
+        y_dataset = y_dataset.squeeze()
+
         X_train, X_test, y_train, y_test = model_selection.train_test_split(
             X_dataset, y_dataset, test_size=test_size, shuffle=shuffle)
 
-        return X_train, X_test, y_train, y_test, columns
+        return X_train, X_test, y_train, y_test, columns, X_scaler, y_scaler
     else:
         raise FileNotFoundError('There are no logfiles in the data folder.')
 
 
 def main():
-    X_train, X_test, y_train, y_test, columns = aggregate_dataset()
+    (X_train, X_test, y_train, y_test,
+     columns, X_scaler, y_scaler) = aggregate_dataset()
     print(X_train.shape)
     print(X_test.shape)
     print(y_train.shape)
     print(y_test.shape)
     plot_data(X_train, y_train, columns)
-
 
 if __name__ == '__main__':
     main()
