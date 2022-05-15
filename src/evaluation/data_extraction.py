@@ -45,7 +45,6 @@ def read_data(path: str) -> Optional[Tuple[np.ndarray, list]]:
         raise ValueError('The csv is empty')
 
     out = out.drop(columns=['altitude', 'timestamp'])
-    out = out.drop(columns=['altitude', 'timestamp'])
 
     return out.to_numpy(), out.columns.tolist()
 
