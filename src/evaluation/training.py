@@ -8,7 +8,7 @@ import data_preparation
 from model import create_model
 from src.evaluation.constants import ABS_PATH
 
-epochs = 2
+epochs = 30
 batch_size = 32
 
 
@@ -16,7 +16,7 @@ def train(epochs,
           batch_size) -> (keras.models.Sequential,
                           np.ndarray, np.ndarray, np.ndarray, np.ndarray):
     (X_train, X_test, y_train, y_test,
-     columns, X_scaler, y_scaler) = data_preparation.aggregate_dataset()
+     columns, X_scaler, y_scaler) = data_preparation.create_dataset()
     print(f'X_train shape: {X_train.shape}')
     print(f'X_test shape: {X_test.shape}')
     print(f'y_train shape: {y_train.shape}')
@@ -38,6 +38,9 @@ def main():
     print(metrics.mean_absolute_error(
         y_scaler.inverse_transform(y_test[..., np.newaxis]).squeeze(),
         y_scaler.inverse_transform(y_pred).squeeze()))
+    # print('Layer weights:')
+    # for layer in model.layers:
+    #     print(layer.get_config(), layer.get_weights())
     model.save(
         os.path.join(ABS_PATH, 'src', 'evaluation', 'models',
                      f'model_{epochs}_epochs_{datetime.now()}.h5'))

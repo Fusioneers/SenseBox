@@ -1,54 +1,34 @@
 import os
-from typing import Optional, Tuple
-import datetime
-import time
+from typing import Tuple, Optional
 
 import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
-from sklearn import preprocessing
 from sklearn import model_selection
+from sklearn import preprocessing
+import joblib
 
 from src.evaluation import data_extraction, constants
 
 
-# TODO get the time
-def convert_time_format(data: np.ndarray) -> np.ndarray:
-    """Convert the time format of the data to unix time.
-
-    Args:
-        data: The data to convert.
-
-    Returns:
-         The data with the time format converted.
-    """
-
-    out = data
-    for row in out:
-        row[0] = np.random.randint(0, 100)
-    return out
-
-
 def standardize(data: np.ndarray) -> Tuple[
     np.ndarray, preprocessing.StandardScaler]:
-    """Get a StandardScaler object.
-
-    Args:
-        data: The data to get the scaler from.
-
-    Returns:
-         The StandardScaler object.
-    """
-
     scaler = preprocessing.StandardScaler().fit(data)
     return scaler.transform(data), scaler
 
 
+# TODO everything seems to be at a constant speed
 def add_wind_speed(data: np.ndarray, path: str) -> np.ndarray:
     wind_speed = data_extraction.get_wind_speed(path)
-    if wind_speed.shape[0] > 3:
+    if wind_speed.shape[0]:
+        wind_speed = np.concatenate(
+            ([[0, 0]], wind_speed, [[data[0, -1], 0]]), axis=0)
         interp_wind_speed = np.interp(data[:, 0], wind_speed[0], wind_speed[1])
+        with open('interp_wind_speed.txt', 'w') as f:
+            f.write(str(interp_wind_speed.tolist()))
+        with open('wind_speed.txt', 'w') as f:
+            f.write(str(wind_speed.tolist()))
         new_data = np.concatenate((data, interp_wind_speed[..., np.newaxis]),
                                   axis=1)
     else:
@@ -56,57 +36,54 @@ def add_wind_speed(data: np.ndarray, path: str) -> np.ndarray:
     return new_data
 
 
-def get_y_dataset():
-    pass
-
-
-def get_dataset(data_path: str,
-                wind_path: str,
-                fix_height: float = None) -> (np.ndarray, np.ndarray, list):
-    data, columns = data_extraction.read_data(data_path)
-    X_dataset = add_wind_speed(data, wind_path)
+def get_dataset(logger_path: str,
+                hallog_path: str,
+                fix_height: Optional[float]) -> (np.ndarray, np.ndarray, list):
+    X_dataset, columns = data_extraction.read_data(logger_path)
+    X_dataset = add_wind_speed(X_dataset, hallog_path)
+    columns.append('wind speed')
 
     if fix_height is not None:
         y_dataset = np.full(X_dataset.shape[0], fix_height)
+        return X_dataset, y_dataset, columns
     else:
-        y_dataset = get_y_dataset()
-
-    return X_dataset, y_dataset, columns
+        return X_dataset, None, columns
 
 
-def plot_data(X_dataset: np.ndarray, y_dataset: np.ndarray, columns: list):
-    columns = {key: X_dataset[:, i] for i, key in enumerate(columns)}
-    columns['altitude'] = y_dataset
-    df = pd.DataFrame(data=columns)
-    sns.pairplot(df)
-    plt.show()
-
-
-def aggregate_dataset(test_size: float = 0.1, shuffle=True) -> (
-        np.ndarray, np.ndarray, np.ndarray, np.ndarray, list,
-        preprocessing.StandardScaler, preprocessing.StandardScaler):
+def get_paths():
     hallog_file_paths = []
     logger_file_paths = []
     fix_heights = []
 
-    for file in os.scandir(
-            constants.get_path('data', 'Messreihen_Rohdaten_10-05-2022')):
-        if file.is_file():
-            if file.name.startswith('HALLOG'):
-                hallog_file_paths.append(file.path)
-            elif file.name.startswith('LOGGER'):
-                logger_file_paths.append(file.path)
-            elif file.name.startswith('FIXHEIGHT'):
-                with open(file.path, 'r') as f:
-                    fix_heights.append(float(f.readline()))
+    for folder in os.scandir(constants.get_path('data')):
+        if folder.is_dir():
+            if '_Messreihe_' in folder.name \
+                    and not 'Zug' in folder.name:
+                for file in os.scandir(folder.path):
+                    if file.is_file():
+                        if file.name.startswith('HALLOG'):
+                            hallog_file_paths.append(file.path)
+                        elif file.name.startswith('LOGGER'):
+                            logger_file_paths.append(file.path)
+                        elif file.name.startswith('FIXHEIGHT'):
+                            with open(file.path, 'r') as f:
+                                fix_heights.append(float(f.readline()))
 
+    return logger_file_paths, hallog_file_paths, fix_heights
+
+
+def aggregate_dataset(logger_file_paths: list,
+                      hallog_file_paths: list,
+                      fix_heights: list) -> (
+        np.ndarray, np.ndarray, np.ndarray, np.ndarray, list,
+        preprocessing.StandardScaler, preprocessing.StandardScaler):
     X_datasets, y_datasets, columns = [], [], []
     if hallog_file_paths and logger_file_paths:
         for hallog, logger, fix_height in zip(hallog_file_paths,
                                               logger_file_paths,
                                               fix_heights):
             X_dataset, y_dataset, columns = get_dataset(logger, hallog,
-                                                        fix_height=fix_height)
+                                                        fix_height)
             X_datasets.append(X_dataset)
             y_datasets.append(y_dataset)
 
@@ -117,22 +94,44 @@ def aggregate_dataset(test_size: float = 0.1, shuffle=True) -> (
         y_dataset, y_scaler = standardize(y_dataset[..., np.newaxis])
         y_dataset = y_dataset.squeeze()
 
-        X_train, X_test, y_train, y_test = model_selection.train_test_split(
-            X_dataset, y_dataset, test_size=test_size, shuffle=shuffle)
-
-        return X_train, X_test, y_train, y_test, columns, X_scaler, y_scaler
+        print('X_dataset descriptive statistics:')
+        print(pd.DataFrame(data=X_dataset, columns=columns).describe())
+        print('y_dataset descriptive statistics:')
+        print(pd.DataFrame(data=y_dataset, columns=['altitude']).describe())
+        return X_dataset, y_dataset, X_scaler, y_scaler, columns
     else:
         raise FileNotFoundError('There are no logfiles in the data folder.')
 
 
+def create_dataset(test_size: float = 0.1, shuffle=True):
+    X_dataset, y_dataset, X_scaler, y_scaler, columns = aggregate_dataset(
+        *get_paths())
+
+    X_train, X_test, y_train, y_test = model_selection.train_test_split(
+        X_dataset, y_dataset, test_size=test_size, shuffle=shuffle)
+
+    return X_train, X_test, y_train, y_test, columns, X_scaler, y_scaler
+
+
+def plot_data(X_dataset, y_dataset, columns, X_scaler, y_scaler):
+    X_dataset_ = X_scaler.inverse_transform(X_dataset)
+    y_dataset_ = y_scaler.inverse_transform(
+        y_dataset[..., np.newaxis]).squeeze()
+    columns_ = {key: X_dataset_[:, i] for i, key in enumerate(columns)}
+    columns_['altitude'] = y_dataset_
+    df = pd.DataFrame(data=columns_)
+    sns.pairplot(df)
+    plt.show()
+
+
 def main():
     (X_train, X_test, y_train, y_test,
-     columns, X_scaler, y_scaler) = aggregate_dataset()
-    print(X_train.shape)
-    print(X_test.shape)
-    print(y_train.shape)
-    print(y_test.shape)
-    plot_data(X_train, y_train, columns)
+     columns, X_scaler, y_scaler) = create_dataset()
+    joblib.dump(X_scaler, 'X_scaler.bin')
+    joblib.dump(y_scaler, 'y_scaler.bin')
+    print('Saved scalers')
+    plot_data(X_train, y_train, columns, X_scaler, y_scaler)
+
 
 if __name__ == '__main__':
     main()

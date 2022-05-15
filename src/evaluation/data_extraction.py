@@ -32,7 +32,6 @@ def read_data(path: str) -> Optional[Tuple[np.ndarray, list]]:
     Returns:
         The data and the columns.
     """
-
     if not os.path.exists(path):
         raise ValueError('Path %s does not exist' % path)
 
@@ -41,12 +40,13 @@ def read_data(path: str) -> Optional[Tuple[np.ndarray, list]]:
     except pd.errors.EmptyDataError as e:
         print(str(e) + ' ' + path)
         return None
-    out = out.drop(columns=['altitude', 'time'])
 
     if out.empty:
         raise ValueError('The csv is empty')
 
-    return out.to_numpy(), out.columns
+    out = out.drop(columns=['altitude', 'timestamp'])
+
+    return out.to_numpy(), out.columns.tolist()
 
 
 def get_wind_speed(path: str) -> np.ndarray:
