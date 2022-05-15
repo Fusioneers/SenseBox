@@ -1,4 +1,5 @@
 import keras
+import numpy as np
 import pandas
 import pandas as pd
 
@@ -6,6 +7,13 @@ import data_preparation
 import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+
+def convert_altitude_to_pressure(altitude: np.ndarray) -> np.ndarray:
+    A = 0.0000225577
+    B = 5.2558
+    C = 101325
+    return np.power(-altitude * A + 1, B) * C / 100000
 
 
 def evaluate_csv(model_path,
