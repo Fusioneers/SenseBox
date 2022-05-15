@@ -40,8 +40,8 @@ def get_dataset(logger_path: str,
                 hallog_path: str,
                 fix_height: Optional[float]) -> (np.ndarray, np.ndarray, list):
     X_dataset, columns = data_extraction.read_data(logger_path)
-    X_dataset = add_wind_speed(X_dataset, hallog_path)
-    columns.append('wind speed')
+    # X_dataset = add_wind_speed(X_dataset, hallog_path)
+    # columns.append('wind speed')
 
     if fix_height is not None:
         y_dataset = np.full(X_dataset.shape[0], fix_height)
@@ -125,12 +125,16 @@ def plot_data(X_dataset, y_dataset, columns, X_scaler, y_scaler):
 
 
 def main():
-    (X_train, X_test, y_train, y_test,
-     columns, X_scaler, y_scaler) = create_dataset()
-    joblib.dump(X_scaler, 'X_scaler.bin')
-    joblib.dump(y_scaler, 'y_scaler.bin')
-    print('Saved scalers')
-    plot_data(X_train, y_train, columns, X_scaler, y_scaler)
+    # (X_train, X_test, y_train, y_test,
+    #  columns, X_scaler, y_scaler) = create_dataset()
+    # joblib.dump(X_scaler, 'X_scaler.bin')
+    # joblib.dump(y_scaler, 'y_scaler.bin')
+    # print('Saved scalers')
+    # plot_data(X_train, y_train, columns, X_scaler, y_scaler)
+
+
+    sns.pairplot(df)
+    plt.show()
 
 
 if __name__ == '__main__':
