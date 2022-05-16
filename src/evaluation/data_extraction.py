@@ -65,7 +65,7 @@ def main():
     # print(get_wind_speed(
     #     os.path.join(ABS_PATH, 'data', 'Fahrradtour_Vg_03-05-2022',
     #                  'datalogger-hall-sensor', '(deprecated)HALLOG01.CSV')))
-
+    pass
 
 if __name__ == '__main__':
     main()

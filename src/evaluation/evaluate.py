@@ -39,14 +39,14 @@ def main():
     model_path = '/home/daniel/coding/SenseBox/src/evaluation/models/model_30_epochs_2022-05-15 18:55:32.491223.h5'
     X_scaler_path = '/home/daniel/coding/SenseBox/src/evaluation/X_scaler.bin'
     y_scaler_path = '/home/daniel/coding/SenseBox/src/evaluation/y_scaler.bin'
-    logger_path = '/home/daniel/coding/SenseBox/data/2022-05-03-Fahrradtour_Vg/datalogger/LOGGER03.CSV'
-    hallog_path = '/home/daniel/coding/SenseBox/data/2022-05-03-Fahrradtour_Vg/datalogger-hall-sensor/HALLOG03.CSV'
+    logger_path = '/home/daniel/coding/SenseBox/data/2022-05-13_Messreihe_Littenweiler/LOGGER03.CSV'
+    hallog_path = '/home/daniel/coding/SenseBox/data/2022-05-13_Messreihe_Littenweiler/HALLOG03.CSV'
     out = evaluate_csv(model_path,
                        X_scaler_path,
                        y_scaler_path,
                        logger_path,
                        hallog_path)
-    print(pd.DataFrame(out, columns=['altitude']))
+    print(pd.DataFrame(out, columns=['altitude']).describe())
     plt.plot(out)
     plt.show()
 
