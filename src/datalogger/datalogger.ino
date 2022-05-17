@@ -1,4 +1,4 @@
-// For Linux: sudo chmod a+rw /dev/ttyACM0
+// "sudo chmod a+rw /dev/ttyACM0" ausführen, um auf Linux die entsprechenden Berechtigungen zu bekommen
 
 // Bibliotheken einbinden
 #include <SPI.h>
@@ -23,9 +23,6 @@ uint32_t syncTime = 0;
 #define yellowLED 6
 #define greenLED 5
 
-// Bestimmt, ob nur der Hall Sensor gemessen wird
-# define onlyMeasureHallSesnor false
-
 // Der digitale Port, an dem der Taster angeschlossen ist
 #define onOffButton A2
 
@@ -35,20 +32,26 @@ uint32_t syncTime = 0;
 // Der analoge Port, an dem der UV-Sensor angeschlossen ist
 #define UVSensor A0
 
-// Kontrolliert wann die Daten gesammelt werden -> kann über den Knopf an onOffButton kontrolliert werden
-int _running = 0;
+// Port des SD-Karten-Lesemoduls
+#define chipSelect 10
+
+// Bestimmt, ob nur der Hall Sensor gemessen wird
+# define onlyMeasureHallSesnor false
+
+// Kontrolliert wann die Daten gesammelt werden -> kann über den Knopf an onOffButton (A2) kontrolliert werden
+int _running = false;
 
 // Zeitpunkt, zu dem der Start-Konopf gedrückt wurde -> läuft nach ca. 50 Tagen über
 unsigned long runningSince = 0; 
 
-// Port des SD-Karten-Lesemoduls
-#define chipSelect 10
-
 // Speichert die letzten 10 Zeiten, zu denen der Hall-Sensor getriggert wurde
 unsigned long lastLallSesnorTriggerTime = 0;
 
-File logfile; // Instanziert das allgemeine Log-File
-File hall_trigger_logfile; // Instanziert das Log-File für die Auslösungen des Hall-Sensors
+// Instanziert das allgemeine Log-File
+File logfile;
+
+// Instanziert das Log-File für die Auslösungen des Hall-Sensors
+File hall_trigger_logfile;
 
 // Falls ein Fehler auftritt, wird er von dieser Funktion gehandhabt
 void error(String message) {
@@ -100,10 +103,10 @@ void setup(void)
   // Setzt den SD-Karten Pin vorsichtshalber bereits auf OUTPUT
   pinMode(10, OUTPUT);
 
-  // Initialisiert die SD-Karte, sofern vorhanden
+  // Falls die SD-Karte nicht initialisiert werden kann, wird ein Fehler ausgegeben
   if (!SD.begin(chipSelect)) {
-    error("Card failed, or not present");
-    errorOccuredInSetup = true;
+    error("Card failed, or not present"); // Ruft die error Methode auf, die sich dann um den Fehler kümmert
+    errorOccuredInSetup = true; // Setzt errorOccuredInSetup auf wahr, sodass am Ende nicht in den loop Teil übergegangen wird
   }
   Serial.println("Card initialized.");
 
@@ -133,45 +136,46 @@ void setup(void)
     }
   }
 
-  // Falls eine der beiden Log-Dateien nicht erstellt wurde (weil z.B. alle Namen belegt waren), ... 
+  // Falls eine der beiden Log-Dateien nicht erstellt wurde (weil z.B. alle Namen belegt waren), wird ein Fehler ausgegeben
   if (!logfile) {
-    error("Could not create a logfile"); // ... wird eine Fehlermeldung ausgegeben
-    errorOccuredInSetup = true;
+    error("Could not create a logfile"); // Ruft die error Methode auf, die sich dann um den Fehler kümmert
+    errorOccuredInSetup = true; // Setzt errorOccuredInSetup auf wahr, sodass am Ende nicht in den loop Teil übergegangen wird
   } else if (!hall_trigger_logfile) {
-    error("Could not create a logfile for the hall sensor triggers"); // ... wird eine Fehlermeldung ausgegeben
-    errorOccuredInSetup = true;
+    error("Could not create a logfile for the hall sensor triggers"); // Ruft die error Methode auf, die sich dann um den Fehler kümmert
+    errorOccuredInSetup = true; // Setzt errorOccuredInSetup auf wahr, sodass am Ende nicht in den loop Teil übergegangen wird
   } else {
-    // ... andernfalls wird der Name der erstellten Log-Datein ausgegeben
+    // Andernfalls werden die Namen der erstellten Log-Datein ausgegeben
     Serial.print("Logging to: ");
     Serial.print(filename);
     Serial.print(" and ");
     Serial.println(hall_trigger_filename);
   }
 
-  // Wenn keine Daten vom BME abgefragt werden können ...
+  // Falls keine Daten vom BME abgefragt werden können, wird ein Fehler ausgegeben
   if (!bme280.init()) {
-    error("Could not read data from BME"); // ... dann soll eine Fehlermeldung ausgegeben werden.
+    error("Could not read data from BME"); // Ruft die error Methode auf, die sich dann um den Fehler kümmert
+    errorOccuredInSetup = true; // Setzt errorOccuredInSetup auf wahr, sodass am Ende nicht in den loop Teil übergegangen wird
   }
 
   // Setzt die Spaltennamen für die CSV-Log-Dateien
   logfile.println("timestamp,temperature,pressure,humidity,altitude,uv");
   hall_trigger_logfile.println("timestamp");
+  // Gibt (falls ECHO_TO_SERIAL wahr ist) eine Warnung aus auf dem seriellen Monitor aus und setzt die Spaltennamen für die Ausgabe
   #if ECHO_TO_SERIAL
-    // Gibt eine Warnung aus
     Serial.println("Note: The timestamp starts with the execution of the programm and will overflow after approx. 50 days.");
-    // Setzt die Spaltennamen für die Ausgabe
     Serial.println("timestamp,temperature,pressure,humidity,altitude,uv"); 
   #endif //ECHO_TO_SERIAL
 
   delay(5000); // Wartet kurz
 
-    // Falls noch keine Fehler aufgetreten ist, wird auf das Drücken des Start-Knopfs gewartet
+    // Falls noch keine Fehler aufgetreten ist, wird gewartet, bis der Start-Knopf gedrückt wird
   if (errorOccuredInSetup == false) {
     while (analogRead(onOffButton) < 1023) {
       delay(500);
     } 
   } else {
-    while (1==1) { // ... andernfalls wird ein Fehler ausgegeben und lange gewartet
+    // Andernfalls wird ein Fehler ausgegeben und in einen ewigen Loop übergegangen
+    while (1==1) { 
       Serial.println("An error occured, see above");
       delay(900000); 
     }
@@ -194,7 +198,7 @@ void setup(void)
 
 void loop(void)
 {  
-  // Falls der An-/Aus-Knopf gedrückt wird
+  // Falls der An-/Aus-Knopf gedrückt wird, wird der Messvorgang beendet
   if (analogRead(onOffButton) >= 1023) {
     _running = false; // _running wird auf false gesetzt
     
@@ -209,10 +213,10 @@ void loop(void)
     digitalWrite(redLED, HIGH); // Schaltet die rote LED an
   }
 
-  // Falls _running wahr ist
+  // Falls _running wahr ist, wird gemessen
   if (_running == true) {
 
-    // Falls lastLallSesnorTriggerTime nicht 0 ist
+    // Falls lastLallSesnorTriggerTime nicht 0 ist, wird lastLallSesnorTriggerTimein die Log-Datei geschrieben
     if (lastLallSesnorTriggerTime != 0) {
 
       // Gibt (falls ECHO_TO_SERIAL wahr ist) "Hall sensor triggered!" auf dem seriellen Monitor aus
@@ -227,7 +231,7 @@ void loop(void)
       lastLallSesnorTriggerTime = 0;
     }
 
-    // Falls nicht nur der Hall Sensor gemessen werden soll ...
+    // Falls nicht nur der Hall Sensor gemessen werden soll, werden auch die Werte der anderen Sensoren gemessen
     if (!onlyMeasureHallSesnor) {
 
       // Setzt _timestamp auf die aktuelle Zeit minus der Startzeit
@@ -281,7 +285,7 @@ void loop(void)
       #endif // ECHO_TO_SERIAL   
     }
   
-    // Falls die letzte Synchronisierung länger als SYNC_INTERVAL Millisecunden her ist
+    // Falls die letzte Synchronisierung länger als SYNC_INTERVAL Millisecunden her ist, wird die SD-Karte synchronisiert
     if ((millis() - syncTime) > SYNC_INTERVAL) {
       // Setzt syncTime auf die aktuelle Zeit
       syncTime = millis();
