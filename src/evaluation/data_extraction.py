@@ -32,7 +32,6 @@ def read_data(path: str) -> Optional[Tuple[np.ndarray, list]]:
     Returns:
         The data and the columns.
     """
-
     if not os.path.exists(path):
         raise ValueError('Path %s does not exist' % path)
 
@@ -41,30 +40,32 @@ def read_data(path: str) -> Optional[Tuple[np.ndarray, list]]:
     except pd.errors.EmptyDataError as e:
         print(str(e) + ' ' + path)
         return None
-    out = out.drop(columns=['altitude', 'time'])
 
     if out.empty:
         raise ValueError('The csv is empty')
 
-    return out.to_numpy(), out.columns
+    out = out.drop(columns=['altitude', 'timestamp'])
+    # out = out.drop(columns=['timestamp'])
+
+    return out.to_numpy(), out.columns.tolist()
 
 
-def get_wind_speed(path: str) -> np.ndarray:
-    csv = pd.read_csv(path, on_bad_lines='skip')
-    data = csv.dropna().drop_duplicates().to_numpy().squeeze()
-    diff = np.diff(data)
-    speed = 1000 / diff
-    return np.array([data[1:-1], speed[1:]]).T
+# def get_wind_speed(path: str) -> np.ndarray:
+#     csv = pd.read_csv(path, on_bad_lines='skip')
+#     data = csv.dropna().drop_duplicates().to_numpy().squeeze()
+#     diff = np.diff(data)
+#     speed = 1000 / diff
+#     return np.array([data[1:-1], speed[1:]]).T
 
 
 def main():
     # print(get_altitude(
     #     os.path.join(ABS_PATH, 'data', 'Fahrradtour_Vg_03-05-2022',
     #                  'Test_Sensorbox.gpx')))
-    print(get_wind_speed(
-        os.path.join(ABS_PATH, 'data', 'Fahrradtour_Vg_03-05-2022',
-                     'datalogger-hall-sensor', '(deprecated)HALLOG01.CSV')))
-
+    # print(get_wind_speed(
+    #     os.path.join(ABS_PATH, 'data', 'Fahrradtour_Vg_03-05-2022',
+    #                  'datalogger-hall-sensor', '(deprecated)HALLOG01.CSV')))
+    pass
 
 if __name__ == '__main__':
     main()
