@@ -1,7 +1,7 @@
 # Facharbeit
 
 # Tool um gpx anzusehen
-https://www.j-berkemeier.de/ShowGPX.html
+
 
 ## Fragestellung
 _Kann man anhand von Umgebungsdaten mithilfe einer KI vorhersagen, auf welcher Höhe man sich befindet?
@@ -37,8 +37,8 @@ Anschließend wird die Genauigkeit evaluiert und mit denen herkömmlicher Method
 
 ### Bibliotheken
 
-
-
+## Resourcen
+* [GPX-Viewer](https://www.j-berkemeier.de/ShowGPX.html)
 
 ---
 **Fusioneers** ([@Fusioneers](https://github.com/Fusioneers)) 2022
