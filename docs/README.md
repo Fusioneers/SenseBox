@@ -1,8 +1,5 @@
 # Facharbeit
 
-# Tool um gpx anzusehen
-https://www.j-berkemeier.de/ShowGPX.html
-
 ## Fragestellung
 _Kann man anhand von Umgebungsdaten mithilfe einer KI vorhersagen, auf welcher Höhe man sich befindet?
 Falls ja, sind diese Vorhersagen genauer als herkömmliche Methoden?_
@@ -36,9 +33,14 @@ Anschließend wird die Genauigkeit evaluiert und mit denen herkömmlicher Method
 * PLA / Styropor / Schrauben etc.
 
 ### Bibliotheken
+#### Arduino
+* SPI.h
+* SD.h
+* Seeed_BME280.h
+* Wire.h
 
-
-
+## Resourcen
+* [GPX-Viewer](https://www.j-berkemeier.de/ShowGPX.html)
 
 ---
 **Fusioneers** ([@Fusioneers](https://github.com/Fusioneers)) 2022

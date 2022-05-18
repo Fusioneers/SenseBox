@@ -2,13 +2,14 @@ import os
 from datetime import datetime
 
 import keras
+import tensorflow as tf
 import numpy as np
 from sklearn import metrics
 import data_preparation
 from model import create_model
-from src.evaluation.constants import ABS_PATH
+from src.evaluation.constants import get_path
 
-epochs = 30
+epochs = 160
 batch_size = 32
 
 
@@ -24,8 +25,23 @@ def train(epochs,
 
     model = create_model(X_train.shape[1:], 1)
     print(model.summary())
-    model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size,
-              validation_data=(X_test, y_test))
+
+    timestamp = datetime.strftime(datetime.now(), '%Y-%m-%d %H-%M-%S.%f')
+    checkpoint_filepath = get_path('src', 'evaluation', 'models',
+                                   f'model_{epochs}_epochs_{timestamp}.h5')
+    model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+        filepath=checkpoint_filepath,
+        save_weights_only=False,
+        monitor='val_accuracy',
+        mode='max',
+        save_best_only=True)
+
+    model.fit(X_train,
+              y_train,
+              epochs=epochs,
+              batch_size=batch_size,
+              validation_data=(X_test, y_test),
+              callbacks=[model_checkpoint_callback])
 
     return model, X_train, X_test, y_train, y_test, columns, X_scaler, y_scaler
 
@@ -41,9 +57,6 @@ def main():
     # print('Layer weights:')
     # for layer in model.layers:
     #     print(layer.get_config(), layer.get_weights())
-    model.save(
-        os.path.join(ABS_PATH, 'src', 'evaluation', 'models',
-                     f'model_{epochs}_epochs_{datetime.now()}.h5'))
 
 
 if __name__ == '__main__':

@@ -87,17 +87,26 @@ def aggregate_dataset(logger_file_paths: list,
             X_datasets.append(X_dataset)
             y_datasets.append(y_dataset)
 
-        X_dataset = np.concatenate(X_datasets, axis=0)
-        y_dataset = np.concatenate(y_datasets, axis=0)
+        resized_X_datasets = []
+        resized_y_datasets = []
+        min_size = int(np.median(np.array([X.shape[0] for X in X_datasets])))
+        for X_dataset, y_dataset in zip(X_datasets, y_datasets):
+            idx = np.random.randint(X_dataset.shape[0], size=min_size)
+            resized_X_datasets.append(X_dataset[idx])
+            resized_y_datasets.append(y_dataset[idx])
 
-        X_dataset, X_scaler = standardize(X_dataset)
-        y_dataset, y_scaler = standardize(y_dataset[..., np.newaxis])
-        y_dataset = y_dataset.squeeze()
+        X_dataset = np.concatenate(resized_X_datasets, axis=0)
+        y_dataset = np.concatenate(resized_y_datasets, axis=0)
 
         print('X_dataset descriptive statistics:')
         print(pd.DataFrame(data=X_dataset, columns=columns).describe())
         print('y_dataset descriptive statistics:')
         print(pd.DataFrame(data=y_dataset, columns=['altitude']).describe())
+
+        X_dataset, X_scaler = standardize(X_dataset)
+        y_dataset, y_scaler = standardize(y_dataset[..., np.newaxis])
+        y_dataset = y_dataset.squeeze()
+
         return X_dataset, y_dataset, X_scaler, y_scaler, columns
     else:
         raise FileNotFoundError('There are no logfiles in the data folder.')
@@ -125,16 +134,12 @@ def plot_data(X_dataset, y_dataset, columns, X_scaler, y_scaler):
 
 
 def main():
-    # (X_train, X_test, y_train, y_test,
-    #  columns, X_scaler, y_scaler) = create_dataset()
-    # joblib.dump(X_scaler, 'X_scaler.bin')
-    # joblib.dump(y_scaler, 'y_scaler.bin')
-    # print('Saved scalers')
-    # plot_data(X_train, y_train, columns, X_scaler, y_scaler)
-
-
-    sns.pairplot(df)
-    plt.show()
+    (X_train, X_test, y_train, y_test,
+     columns, X_scaler, y_scaler) = create_dataset()
+    joblib.dump(X_scaler, 'X_scaler.bin')
+    joblib.dump(y_scaler, 'y_scaler.bin')
+    print('Saved scalers')
+    plot_data(X_train, y_train, columns, X_scaler, y_scaler)
 
 
 if __name__ == '__main__':
