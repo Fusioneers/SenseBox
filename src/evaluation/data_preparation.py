@@ -125,12 +125,12 @@ def plot_data(X_dataset, y_dataset, columns, X_scaler, y_scaler):
 
 
 def main():
-    # (X_train, X_test, y_train, y_test,
-    #  columns, X_scaler, y_scaler) = create_dataset()
-    # joblib.dump(X_scaler, 'X_scaler.bin')
-    # joblib.dump(y_scaler, 'y_scaler.bin')
-    # print('Saved scalers')
-    # plot_data(X_train, y_train, columns, X_scaler, y_scaler)
+    (X_train, X_test, y_train, y_test,
+     columns, X_scaler, y_scaler) = create_dataset()
+    joblib.dump(X_scaler, 'X_scaler.bin')
+    joblib.dump(y_scaler, 'y_scaler.bin')
+    print('Saved scalers')
+    plot_data(X_train, y_train, columns, X_scaler, y_scaler)
 
 
     sns.pairplot(df)

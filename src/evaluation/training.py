@@ -8,7 +8,7 @@ import data_preparation
 from model import create_model
 from src.evaluation.constants import ABS_PATH
 
-epochs = 30
+epochs = 2
 batch_size = 32
 
 
@@ -41,9 +41,10 @@ def main():
     # print('Layer weights:')
     # for layer in model.layers:
     #     print(layer.get_config(), layer.get_weights())
+    timestamp = datetime.strftime(datetime.now(), '%Y-%m-%d %H-%M-%S.%f')
     model.save(
         os.path.join(ABS_PATH, 'src', 'evaluation', 'models',
-                     f'model_{epochs}_epochs_{datetime.now()}.h5'))
+                     f'model_{epochs}_epochs_{timestamp}.h5'))
 
 
 if __name__ == '__main__':
