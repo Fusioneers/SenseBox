@@ -33,6 +33,11 @@ Anschließend wird die Genauigkeit evaluiert und mit denen herkömmlicher Method
 * PLA / Styropor / Schrauben etc.
 
 ### Bibliotheken
+#### Arduino
+* SPI.h
+* SD.h
+* Seeed_BME280.h
+* Wire.h
 
 ## Resourcen
 * [GPX-Viewer](https://www.j-berkemeier.de/ShowGPX.html)
