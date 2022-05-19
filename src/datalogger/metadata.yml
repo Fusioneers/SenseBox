@@ -1,0 +1,10 @@
+---
+header-includes:
+  - \usepackage{fvextra}
+  - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+  - \usepackage{fancyhdr}
+  - \pagestyle{fancy}
+  - \lhead{SenseBox}
+  - \chead{Seite \thepage}
+  - \rhead{Schuljahr 2021/22}
+---
