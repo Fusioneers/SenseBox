@@ -1,9 +1,15 @@
 # Facharbeit
 
-## Lorem ipsum
+## Titelseite
 
-## Lorem ipsum
+## Inhaltsverzeichnis
 
-``` c++
-int zahl = 0;
-```
+## Aufgabenstellung und Zielsetzung
+
+## Inhaltliche Grundlagen
+
+## Ergebnisse Reflexion Literatur-/ Abbildungsverzeichnis
+
+## Eigenständigkeitserklärung
+
+Laborbuch
