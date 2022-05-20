@@ -7,6 +7,7 @@ import data_preparation
 import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
+from tensorflow_addons import activations
 
 
 def convert_altitude_to_pressure(altitude: np.ndarray) -> np.ndarray:
@@ -19,7 +20,8 @@ def convert_altitude_to_pressure(altitude: np.ndarray) -> np.ndarray:
 def evaluate_csv(model_path,
                  X_scaler_path, y_scaler_path, logger_path,
                  hallog_path):
-    model = keras.models.load_model(model_path)
+    model = keras.models.load_model(model_path, custom_objects={
+        'activations': activations})
     X_scaler = joblib.load(X_scaler_path)
     y_scaler = joblib.load(y_scaler_path)
 
@@ -36,7 +38,7 @@ def evaluate_csv(model_path,
 
 
 def main():
-    model_path = '/home/daniel/coding/SenseBox/src/evaluation/models/model_2_epochs_2022-05-18 16-13-43.051212.h5'
+    model_path = '/home/daniel/coding/SenseBox/src/evaluation/models/model_5_epochs_2022-05-20 15-12-21.352063.tf'
     X_scaler_path = '/home/daniel/coding/SenseBox/src/evaluation/X_scaler.bin'
     y_scaler_path = '/home/daniel/coding/SenseBox/src/evaluation/y_scaler.bin'
     logger_path = '/home/daniel/coding/SenseBox/data/2022-05-13_Messreihe_Zug_S1_Hbf_Kirchzarten/LOGGER03.CSV'

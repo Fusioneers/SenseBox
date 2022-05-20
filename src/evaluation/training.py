@@ -9,7 +9,7 @@ import data_preparation
 from model import create_model
 from src.evaluation.constants import get_path
 
-epochs = 160
+epochs = 5
 batch_size = 32
 
 
@@ -32,7 +32,7 @@ def train(epochs,
     model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
         filepath=checkpoint_filepath,
         save_weights_only=False,
-        monitor='val_accuracy',
+        monitor='val_loss',
         mode='max',
         save_best_only=True)
 
@@ -41,7 +41,8 @@ def train(epochs,
               epochs=epochs,
               batch_size=batch_size,
               validation_data=(X_test, y_test),
-              callbacks=[model_checkpoint_callback])
+              callbacks=[model_checkpoint_callback],
+              use_multiprocessing=True)
 
     return model, X_train, X_test, y_train, y_test, columns, X_scaler, y_scaler
 

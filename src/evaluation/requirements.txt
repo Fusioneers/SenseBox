@@ -1,6 +1,7 @@
-keras
+keras==2.6.0
 numpy
 pandas
 seaborn
-matplotlib
-scikit-learn
+matplotlib==3.5.2
+scikit-learn==1.1.1
+tensorflow-addons==0.16.1

@@ -1,5 +1,7 @@
 import keras
 from keras import layers
+from tensorflow_addons import activations
+import tensorflow as tf
 
 
 def create_model(input_shape, output_shape):
@@ -12,11 +14,23 @@ def create_model(input_shape, output_shape):
 
     """
     model = keras.Sequential()
-    model.add(layers.Dense(units=10, activation='relu',
-                           input_shape=input_shape))
-    model.add(layers.Dense(units=10, activation='relu'))
-    model.add(layers.Dense(units=10, activation='relu'))
-    model.add(layers.Dense(units=10, activation='relu'))
+
+    model.add(layers.Dense(units=10, input_shape=input_shape))
+    model.add(layers.BatchNormalization())
+    model.add(layers.Activation(activation=activations.mish))
+
+    model.add(layers.Dense(units=10))
+    model.add(layers.BatchNormalization())
+    model.add(layers.Activation(activation=activations.mish))
+
+    model.add(layers.Dense(units=10))
+    model.add(layers.BatchNormalization())
+    model.add(layers.Activation(activation=tf.keras.activations.elu))
+
+    model.add(layers.Dense(units=10))
+    model.add(layers.BatchNormalization())
+    model.add(layers.Activation(activation=activations.mish))
+
     model.add(layers.Dense(units=output_shape, activation='linear'))
 
     model.compile(loss='mean_squared_error', optimizer='adam')
