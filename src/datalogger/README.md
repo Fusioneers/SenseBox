@@ -297,7 +297,7 @@ void loop(void)
 
 ### Programm Ablauf Plan (PAP)
 
-![PAP](PAP.svg)
+![PAP](PAP.png)
 
 ## Erklärung der Status LEDs
 
