@@ -9,13 +9,14 @@ import data_preparation
 from model import create_model
 from src.evaluation.constants import get_path
 
-epochs = 5
-batch_size = 32
+# epochs, batchsize
+# 10, 64 at the end best val_loss
+batch_sizes = [[30, 32]]
 
 
-def train(epochs,
-          batch_size) -> (keras.models.Sequential,
-                          np.ndarray, np.ndarray, np.ndarray, np.ndarray):
+def train() -> (keras.models.Sequential,
+                np.ndarray, np.ndarray, np.ndarray,
+                np.ndarray):
     (X_train, X_test, y_train, y_test,
      columns, X_scaler, y_scaler) = data_preparation.create_dataset()
     print(f'X_train shape: {X_train.shape}')
@@ -28,7 +29,7 @@ def train(epochs,
 
     timestamp = datetime.strftime(datetime.now(), '%Y-%m-%d %H-%M-%S.%f')
     checkpoint_filepath = get_path('src', 'evaluation', 'models',
-                                   f'model_{epochs}_epochs_{timestamp}.h5')
+                                   f'model_{timestamp}.h5')
     model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
         filepath=checkpoint_filepath,
         save_weights_only=False,
@@ -36,20 +37,20 @@ def train(epochs,
         mode='max',
         save_best_only=True)
 
-    model.fit(X_train,
-              y_train,
-              epochs=epochs,
-              batch_size=batch_size,
-              validation_data=(X_test, y_test),
-              callbacks=[model_checkpoint_callback],
-              use_multiprocessing=True)
+    for epochs, batchsize in batch_sizes:
+        model.fit(X_train, y_train,
+                  batch_size=batchsize,
+                  epochs=epochs,
+                  validation_data=(X_test, y_test),
+                  callbacks=[model_checkpoint_callback],
+                  use_multiprocessing=True)
 
     return model, X_train, X_test, y_train, y_test, columns, X_scaler, y_scaler
 
 
 def main():
     (model, X_train, X_test, y_train, y_test,
-     columns, X_scaler, y_scaler) = train(epochs, batch_size)
+     columns, X_scaler, y_scaler) = train()
     print(X_train.shape)
     y_pred = model.predict(X_test)
     print(metrics.mean_absolute_error(
