@@ -16,20 +16,16 @@ def create_model(input_shape, output_shape):
     model = keras.Sequential()
 
     model.add(layers.Dense(units=10, input_shape=input_shape))
-    model.add(layers.BatchNormalization())
-    model.add(layers.Activation(activation=activations.mish))
+    model.add(layers.Activation(activation=tf.keras.activations.relu))
 
     model.add(layers.Dense(units=10))
-    model.add(layers.BatchNormalization())
-    model.add(layers.Activation(activation=activations.mish))
+    model.add(layers.Activation(activation=tf.keras.activations.relu))
 
     model.add(layers.Dense(units=10))
-    model.add(layers.BatchNormalization())
-    model.add(layers.Activation(activation=tf.keras.activations.elu))
+    model.add(layers.Activation(activation=tf.keras.activations.relu))
 
     model.add(layers.Dense(units=10))
-    model.add(layers.BatchNormalization())
-    model.add(layers.Activation(activation=activations.mish))
+    model.add(layers.Activation(activation=tf.keras.activations.relu))
 
     model.add(layers.Dense(units=output_shape, activation='linear'))
 
