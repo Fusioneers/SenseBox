@@ -1,3 +1,4 @@
+import io
 import os
 
 import keras
@@ -13,6 +14,7 @@ import seaborn as sns
 from tensorflow_addons import activations
 
 from src.evaluation import constants
+from src.evaluation.constants import get_path
 
 
 def convert_altitude_to_pressure(altitude: np.ndarray) -> np.ndarray:
@@ -39,12 +41,14 @@ def evaluate_csv(model_path,
     return out
 
 
-def plot(path, X_test, y_test):
-    model_path = path  # '/home/daniel/coding/SenseBox/src/evaluation/models/model_2022-05-20 21-40-10.523628.h5'
+def plot(path, X_test, y_test, n):
+    model_path = path
     X_scaler_path = '/home/daniel/coding/SenseBox/src/evaluation/X_scaler.bin'
     y_scaler_path = '/home/daniel/coding/SenseBox/src/evaluation/y_scaler.bin'
-    logger_path = '/home/daniel/coding/SenseBox/data/2022-05-13_Messreihe_Zug_S1_Hbf_Kirchzarten/LOGGER03.CSV'
-    hallog_path = '/home/daniel/coding/SenseBox/data/2022-05-13_Messreihe_Zug_S1_Hbf_Kirchzarten/HALLOG03.CSV'
+    logger_path = '/home/daniel/coding/SenseBox/data/' \
+                  '2022-05-13_Messreihe_Zug_S1_Hbf_Kirchzarten/LOGGER03.CSV'
+    hallog_path = '/home/daniel/coding/SenseBox/data/' \
+                  '2022-05-13_Messreihe_Zug_S1_Hbf_Kirchzarten/HALLOG03.CSV'
     model = keras.models.load_model(model_path)
     y_scaler = joblib.load(y_scaler_path)
 
@@ -53,34 +57,58 @@ def plot(path, X_test, y_test):
                        y_scaler_path,
                        logger_path,
                        hallog_path)
-    print(pd.DataFrame(out, columns=['altitude']).describe())
+    # print(pd.DataFrame(out, columns=['altitude']).describe())
     data = pd.read_csv(logger_path)
     plt.plot(data['timestamp'], out)
-    plt.title(path.split('/')[-1])
-    plt.show()
-
+    plt.savefig(
+        get_path('docs', 'Laborbuch-AI', 'images', str(n) + '.png'))
+    plt.clf()
     y_pred = model.predict(X_test)
     error = metrics.mean_absolute_error(
         y_scaler.inverse_transform(y_test[..., np.newaxis]).squeeze(),
         y_scaler.inverse_transform(y_pred).squeeze())
 
-    return error
+    s = io.StringIO()
+    model.summary(print_fn=lambda x: s.write(x + '\n'))
+    model_summary = s.getvalue()
+    s.close()
+
+    return error, model_summary
 
 
 def main():
     (X_train, X_test, y_train, y_test,
      columns, X_scaler, y_scaler) = data_preparation.create_dataset()
-    errors = []
+    with open(
+            get_path('docs', 'Laborbuch-AI', 'Laborbuch-AI.md'),
+            'a') as f:
+        for n, path in enumerate(
+                os.scandir(constants.get_path('src', 'evaluation', 'models'))):
+            if path.is_file() and 'h5' in path.name:
+                try:
+                    error, summary = plot(path.path, X_test, y_test, n)
 
-    for path in os.scandir(constants.get_path('src', 'evaluation', 'models')):
-        if path.is_file() and 'h5' in path.name:
-            try:
-                error = plot(path.path, X_test, y_test)
-                errors.append([error, path.name])
-            except Exception as e:
-                print(e)
-    print(f'Errors: {errors}')
-    print(f'Min: {min(errors)}')
+                    out = f"""\
+## Model {n}
+
+### Model Architektur
+
+```
+{summary}
+```
+
+### Durchschnittlicher absoluter Fehler auf Testdaten (in Meter)
+
+{error.numpy()}m
+
+### Daten Zugfahrt mit Model ausgewertet
+![{str(n)}.png](images/{str(n)}.png)
+
+"""
+                    f.write(out)
+                except Exception as e:
+                    print(e)
+                    print(path.name)
 
 
 if __name__ == '__main__':
