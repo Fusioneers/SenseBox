@@ -12,4 +12,4 @@
 
 ## Eigenständigkeitserklärung
 
-Laborbuch
+## Laborbuch

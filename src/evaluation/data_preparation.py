@@ -18,22 +18,21 @@ def standardize(data: np.ndarray) -> Tuple[
     return scaler.transform(data), scaler
 
 
-# TODO everything seems to be at a constant speed
-def add_wind_speed(data: np.ndarray, path: str) -> np.ndarray:
-    wind_speed = data_extraction.get_wind_speed(path)
-    if wind_speed.shape[0]:
-        wind_speed = np.concatenate(
-            ([[0, 0]], wind_speed, [[data[0, -1], 0]]), axis=0)
-        interp_wind_speed = np.interp(data[:, 0], wind_speed[0], wind_speed[1])
-        with open('interp_wind_speed.txt', 'w') as f:
-            f.write(str(interp_wind_speed.tolist()))
-        with open('wind_speed.txt', 'w') as f:
-            f.write(str(wind_speed.tolist()))
-        new_data = np.concatenate((data, interp_wind_speed[..., np.newaxis]),
-                                  axis=1)
-    else:
-        new_data = np.concatenate((data, np.zeros((data.shape[0], 1))), axis=1)
-    return new_data
+# def add_wind_speed(data: np.ndarray, path: str) -> np.ndarray:
+#     wind_speed = data_extraction.get_wind_speed(path)
+#     if wind_speed.shape[0]:
+#         wind_speed = np.concatenate(
+#             ([[0, 0]], wind_speed, [[data[0, -1], 0]]), axis=0)
+#         interp_wind_speed = np.interp(data[:, 0], wind_speed[0], wind_speed[1])
+#         with open('interp_wind_speed.txt', 'w') as f:
+#             f.write(str(interp_wind_speed.tolist()))
+#         with open('wind_speed.txt', 'w') as f:
+#             f.write(str(wind_speed.tolist()))
+#         new_data = np.concatenate((data, interp_wind_speed[..., np.newaxis]),
+#                                   axis=1)
+#     else:
+#         new_data = np.concatenate((data, np.zeros((data.shape[0], 1))), axis=1)
+#     return new_data
 
 
 def get_dataset(logger_path: str,
