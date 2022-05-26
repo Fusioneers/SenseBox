@@ -30,7 +30,7 @@ Hinweis: Beim Abholen hat nur noch die grüne LED geleuchtet und ist auch nicht 
 * Ende: 15:29
 * ID: 00
 
-### Freiburg-Littenweilerö
+### Freiburg-Littenweiler
 * Start: 15:43
 * Temperatur: 26°C
 * Wolken: leicht bewölkt
