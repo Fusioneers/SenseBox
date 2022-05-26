@@ -43,12 +43,12 @@ def evaluate_csv(model_path,
 
 def plot(path, X_test, y_test, n):
     model_path = path
-    X_scaler_path = '/home/daniel/coding/SenseBox/src/evaluation/X_scaler.bin'
-    y_scaler_path = '/home/daniel/coding/SenseBox/src/evaluation/y_scaler.bin'
-    logger_path = '/home/daniel/coding/SenseBox/data/' \
-                  '2022-05-13_Messreihe_Zug_S1_Hbf_Kirchzarten/LOGGER03.CSV'
-    hallog_path = '/home/daniel/coding/SenseBox/data/' \
-                  '2022-05-13_Messreihe_Zug_S1_Hbf_Kirchzarten/HALLOG03.CSV'
+    X_scaler_path = get_path('src', 'evaluation', 'X_scaler.bin')
+    y_scaler_path = get_path('src', 'evaluation', 'y_scaler.bin')
+    logger_path = get_path(
+        'data', '2022-05-13_Messreihe_Zug_S1_Hbf_Kirchzarten/LOGGER03.CSV')
+    hallog_path = get_path(
+        'data', '2022-05-13_Messreihe_Zug_S1_Hbf_Kirchzarten/HALLOG03.CSV')
     model = keras.models.load_model(model_path)
     y_scaler = joblib.load(y_scaler_path)
 
