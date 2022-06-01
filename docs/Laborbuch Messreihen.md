@@ -7,8 +7,8 @@
 | Ort                 | Feuertreppe Saalbau ganz oben                                                                                   |
 | Mit Strom verbunden | 2022-05-01 13:20                                                                                                |
 | Valide Daten ab     | 2022-05-01 13:25                                                                                                |
-| Valide Daten bis    | 16:25                                                                                                           |
-| Stopp               | 16:27                                                                                                           |
+| Valide Daten bis    | 2022-05-01 16:25                                                                                                |
+| Stopp               | 2022-05-01 16:27                                                                                                |
 | Hinweis             | Beim Abholen hat nur noch die grüne LED geleuchtet und ist auch nicht ausgegangen, als der Knopf gedrückt wurde |
 
 ## Messungen Dienstag, 10.05.2022
@@ -96,52 +96,53 @@
 | Beschreibung | Wert                |
 |--------------|---------------------|
 | Koordinaten  | 48.010147, 7.857332 |
-| Start        | 16:47               |
-| Ende         | 16:59               |
+| Start        | 2022-05-13 16:47    |
+| Ende         | 2022-05-13 16:59    |
 
 ### Uni Garten 261.0 m laut freemaptools.coM
 
 | Beschreibung | Wert               |
 |--------------|--------------------|
 | Koordinaten  | 48.009786, 7.85733 |
-| Start        | 17:02              |
-| Ende         | 17:47              |
+| Start        | 2022-05-13 17:02   |
+| Ende         | 2022-05-13 17:47   |
 
 ### Freiburg Hbf
 
-| Beschreibung | Wert   |
-|--------------|--------|
-| Start        | 19:05  |
-| Ende         | 19:07  |
+| Beschreibung | Wert             |
+|--------------|------------------|
+| Start        | 2022-05-13 19:05 |
+| Ende         | 2022-05-13 19:07 |
 
 ### Fahrt
 
-| Beschreibung | Wert   |
-|--------------|--------|
-| Start        | 19:10  |
-| Ende         | 19:23  |
+| Beschreibung | Wert             |
+|--------------|------------------|
+| Start        | 2022-05-13 19:10 |
+| Ende         | 2022-05-13 19:23 |
 
 ### Kirchzarten (Schatten)
 
-| Beschreibung | Wert                         |
-|--------------|------------------------------|
-| Start        | 19:29                        |
-| Ende         | ca. 19:40 (19:34) Akku leer  |
+| Beschreibung | Wert                                              |
+|--------------|---------------------------------------------------|
+| Start        | 2022-05-13 19:29                                  |
+| Ende         | 2022-05-13 ca. 19:40                              |
+| Bemerkung    | Akku leer geworden (laut Rekonstruktion um 19:34) |
 
-## Daten von 2022-05-17
+## Daten von 2022-05-17 / 2022-05-18
 
-Feuertreppe oben
+Position: Feuertreppe oben
 
 ### Lauf A
 
-| Beschreibung | Wert                                    |
-|--------------|-----------------------------------------|
-| Start        | 14:00                                   |
-| Ende         | ca. 19:00 (vor 19:00 Blinken aufgehört) |
+| Beschreibung | Wert                                               |
+|--------------|----------------------------------------------------|
+| Start        | 2022-05-17 14:00                                   |
+| Ende         | 2022-05-17 ca. 19:00 (vor 19:00 Blinken aufgehört) |
 
 ### Lauf B
 
-| Beschreibung | Wert            |
-|--------------|-----------------|
-| Start        | 19:00           |
-| Ende         | mind. 00:00 +1d |
+| Beschreibung | Wert                   |
+|--------------|------------------------|
+| Start        | 2022-05-17 19:00       |
+| Ende         | mind. 2022-05-18 00:00 |
