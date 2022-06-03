@@ -25,15 +25,13 @@ def convert_altitude_to_pressure(altitude: np.ndarray) -> np.ndarray:
 
 
 def evaluate_csv(model_path,
-                 X_scaler_path, y_scaler_path, logger_path,
-                 hallog_path):
+                 X_scaler_path, y_scaler_path, logger_path):
     model = keras.models.load_model(model_path, custom_objects={
         'activations': activations})
     X_scaler = joblib.load(X_scaler_path)
     y_scaler = joblib.load(y_scaler_path)
 
-    data, _, columns = data_preparation.get_dataset(logger_path, hallog_path,
-                                                    None)
+    data, _, columns = data_preparation.get_dataset(logger_path, None)
     X_dataset = X_scaler.transform(data)
     out = model.predict(X_dataset)
     out = y_scaler.inverse_transform(out)
@@ -46,22 +44,21 @@ def plot(path, X_test, y_test, n):
     X_scaler_path = get_path('src', 'evaluation', 'X_scaler.bin')
     y_scaler_path = get_path('src', 'evaluation', 'y_scaler.bin')
     logger_path = get_path(
-        'data', '2022-05-13_Messreihe_Zug_S1_Hbf_Kirchzarten/LOGGER03.CSV')
-    hallog_path = get_path(
-        'data', '2022-05-13_Messreihe_Zug_S1_Hbf_Kirchzarten/HALLOG03.CSV')
+        'data', '2022-05-03-Fahrradtour_Vg',
+        'exact_pressure_2022-05-03-Fahrradtour_Vg_LOGGER04.CSV')
     model = keras.models.load_model(model_path)
     y_scaler = joblib.load(y_scaler_path)
 
     out = evaluate_csv(model_path,
                        X_scaler_path,
                        y_scaler_path,
-                       logger_path,
-                       hallog_path)
+                       logger_path)
     # print(pd.DataFrame(out, columns=['altitude']).describe())
     data = pd.read_csv(logger_path)
     plt.plot(data['timestamp'], out)
     plt.savefig(
-        get_path('docs', 'Laborbuch-AI', 'images', str(n) + '.png'))
+        get_path('docs', 'Laborbuch-AI-Fahrradtour', 'images',
+                 str(n) + '.png'))
     plt.clf()
     y_pred = model.predict(X_test)
     error = metrics.mean_absolute_error(
@@ -72,7 +69,7 @@ def plot(path, X_test, y_test, n):
     model.summary(print_fn=lambda x: s.write(x + '\n'))
     model_summary = s.getvalue()
     s.close()
-
+    model.save(get_path('docs', 'models', f'model-{n}.h5'))
     return error, model_summary
 
 
@@ -80,10 +77,10 @@ def main():
     (X_train, X_test, y_train, y_test,
      columns, X_scaler, y_scaler) = data_preparation.create_dataset()
     with open(
-            get_path('docs', 'Laborbuch-AI', 'Laborbuch-AI.md'),
+            get_path('docs', 'Laborbuch-AI-Fahrradtour', 'Laborbuch-AI.md'),
             'a') as f:
         for n, path in enumerate(
-                os.scandir(constants.get_path('src', 'evaluation', 'models'))):
+                os.scandir(constants.get_path('src', 'evaluation', 'raw-models'))):
             if path.is_file() and 'h5' in path.name:
                 try:
                     error, summary = plot(path.path, X_test, y_test, n)
@@ -101,7 +98,7 @@ def main():
 
 {error.numpy()}m
 
-### Daten Zugfahrt mit Model ausgewertet
+### Daten Fahrradtour mit Model ausgewertet
 ![{str(n)}.png](images/{str(n)}.png)
 
 """

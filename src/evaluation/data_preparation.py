@@ -36,11 +36,8 @@ def standardize(data: np.ndarray) -> Tuple[
 
 
 def get_dataset(logger_path: str,
-                hallog_path: str,
                 fix_height: Optional[float]) -> (np.ndarray, np.ndarray, list):
     X_dataset, columns = data_extraction.read_data(logger_path)
-    # X_dataset = add_wind_speed(X_dataset, hallog_path)
-    # columns.append('wind speed')
 
     if fix_height is not None:
         y_dataset = np.full(X_dataset.shape[0], fix_height)
@@ -57,7 +54,7 @@ def get_paths():
     for folder in os.scandir(constants.get_path('data')):
         if folder.is_dir():
             if '_Messreihe_' in folder.name \
-                    and not 'Zug' in folder.name:
+                    and 'Zug' not in folder.name:
                 for file in os.scandir(folder.path):
                     if file.is_file():
                         if file.name.startswith('HALLOG'):
@@ -81,8 +78,7 @@ def aggregate_dataset(logger_file_paths: list,
         for hallog, logger, fix_height in zip(hallog_file_paths,
                                               logger_file_paths,
                                               fix_heights):
-            X_dataset, y_dataset, columns = get_dataset(logger, hallog,
-                                                        fix_height)
+            X_dataset, y_dataset, columns = get_dataset(logger, fix_height)
             X_datasets.append(X_dataset)
             y_datasets.append(y_dataset)
 

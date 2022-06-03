@@ -28,7 +28,7 @@ def train() -> (keras.models.Sequential,
     print(model.summary())
 
     timestamp = datetime.strftime(datetime.now(), '%Y-%m-%d %H-%M-%S.%f')
-    checkpoint_filepath = get_path('src', 'evaluation', 'models',
+    checkpoint_filepath = get_path('src', 'evaluation', 'raw-models',
                                    f'model_{timestamp}.h5')
     model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
         filepath=checkpoint_filepath,
