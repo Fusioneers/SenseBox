@@ -21,7 +21,7 @@ def read_wind_speed(file_name):
     return wind_speed_data
 
 
-print(read_wind_speed('../../data/2022-05-17_Messreihe_Feuertreppe/HALLOG03.CSV'))
+print(read_wind_speed('../../data/2022-05-17-0002-FT/HALLOG03.CSV'))
 
 
 # calulate wind speed in m/s from time in milliseconds
@@ -34,7 +34,7 @@ def calculate_wind_speed(wind_speed_data):
 
 
 
-speeds = calculate_wind_speed(read_wind_speed('../../data/2022-05-17_Messreihe_Feuertreppe/HALLOG03.CSV'))
+speeds = calculate_wind_speed(read_wind_speed('../../data/2022-05-17-0002-FT/HALLOG03.CSV'))
 
 print(speeds)
 
