@@ -51,19 +51,18 @@ def get_paths():
     logger_file_paths = []
     fix_heights = []
 
-    for folder in os.scandir(constants.get_path('data')):
+    for folder in os.scandir(
+            constants.get_path('src', 'evaluation', 'data-training')):
         if folder.is_dir():
-            if '_Messreihe_' in folder.name \
-                    and 'Zug' not in folder.name:
-                for file in os.scandir(folder.path):
-                    if file.is_file():
-                        if file.name.startswith('HALLOG'):
-                            hallog_file_paths.append(file.path)
-                        elif file.name.startswith('LOGGER'):
-                            logger_file_paths.append(file.path)
-                        elif file.name.startswith('FIXHEIGHT'):
-                            with open(file.path, 'r') as f:
-                                fix_heights.append(float(f.readline()))
+            for file in os.scandir(folder.path):
+                if file.is_file():
+                    if file.name.startswith('HALLOG'):
+                        hallog_file_paths.append(file.path)
+                    elif file.name.startswith('LOGGER'):
+                        logger_file_paths.append(file.path)
+                    elif file.name.startswith('FIXHEIGHT'):
+                        with open(file.path, 'r') as f:
+                            fix_heights.append(float(f.readline()))
 
     return logger_file_paths, hallog_file_paths, fix_heights
 

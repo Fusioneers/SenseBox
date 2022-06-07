@@ -44,8 +44,7 @@ def plot(path, X_test, y_test, n):
     X_scaler_path = get_path('src', 'evaluation', 'X_scaler.bin')
     y_scaler_path = get_path('src', 'evaluation', 'y_scaler.bin')
     logger_path = get_path(
-        'data', '2022-05-03-Fahrradtour_Vg',
-        'exact_pressure_2022-05-03-Fahrradtour_Vg_LOGGER04.CSV')
+        'data', '2022-05-03-0004-VG-exact-pressure.CSV')
     model = keras.models.load_model(model_path)
     y_scaler = joblib.load(y_scaler_path)
 
@@ -57,7 +56,7 @@ def plot(path, X_test, y_test, n):
     data = pd.read_csv(logger_path)
     plt.plot(data['timestamp'], out)
     plt.savefig(
-        get_path('docs', 'Laborbuch-AI-Fahrradtour', 'images',
+        get_path('docs', 'Laborbuch-AI-assets', 'images',
                  str(n) + '.png'))
     plt.clf()
     y_pred = model.predict(X_test)
@@ -77,10 +76,11 @@ def main():
     (X_train, X_test, y_train, y_test,
      columns, X_scaler, y_scaler) = data_preparation.create_dataset()
     with open(
-            get_path('docs', 'Laborbuch-AI-Fahrradtour', 'Laborbuch-AI.md'),
+            get_path('docs', 'Laborbuch-AI-assets', 'Laborbuch-AI.md'),
             'a') as f:
         for n, path in enumerate(
-                os.scandir(constants.get_path('src', 'evaluation', 'raw-models'))):
+                os.scandir(
+                    constants.get_path('src', 'evaluation', 'models-old'))):
             if path.is_file() and 'h5' in path.name:
                 try:
                     error, summary = plot(path.path, X_test, y_test, n)
@@ -98,7 +98,7 @@ def main():
 
 {error.numpy()}m
 
-### Daten Fahrradtour mit Model ausgewertet
+### Daten 2022-05-03-0004-VG mit Model ausgewertet
 ![{str(n)}.png](images/{str(n)}.png)
 
 """
